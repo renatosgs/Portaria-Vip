@@ -79,11 +79,11 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* HEADER */
+    /* HEADER COM SUPORTE À ÁREA SEGURA (NOTCH DO IPHONE) */
     header {
       background: linear-gradient(180deg, #10182b 0%, #080d19 100%);
       border-bottom: 1px solid var(--border);
-      padding: 14px 20px;
+      padding: max(14px, env(safe-area-inset-top)) 20px 14px 20px;
       position: sticky;
       top: 0;
       z-index: 60;
@@ -225,33 +225,45 @@
       color: #fff;
     }
 
-    /* TABS */
+    /* TABS RESPONSIVAS E TOTALMENTE ADAPTÁVEIS */
     .tab-navigation {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       background-color: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 5px;
+      padding: 6px;
       gap: 6px;
-      overflow-x: auto;
     }
     .tab-btn {
-      flex: 1;
-      min-width: 140px;
-      padding: 12px 10px;
-      border: none;
+      width: 100%;
+      min-width: 0;
+      padding: 11px 8px;
+      border: 1px solid transparent;
       background: transparent;
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       border-radius: 10px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       transition: all 0.2s ease;
-      white-space: nowrap;
+      text-align: center;
+      line-height: 1.25;
+    }
+    .tab-btn .tab-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .tab-btn .tab-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
     }
     .tab-btn:hover {
       color: #fff;
@@ -262,6 +274,38 @@
       color: var(--gold-light);
       border: 1px solid rgba(245, 158, 11, 0.4);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .tab-count-badge {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--gold-light);
+      padding: 1px 7px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-block;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Adaptação inteligente para telas de celular (até 640px) */
+    @media (max-width: 640px) {
+      .tab-navigation {
+        padding: 4px;
+        gap: 4px;
+      }
+      .tab-btn {
+        flex-direction: column;
+        padding: 9px 3px;
+        font-size: 11px;
+        gap: 3px;
+        min-height: 54px;
+      }
+      .tab-btn .tab-icon {
+        font-size: 18px;
+      }
+      .tab-btn .tab-label {
+        font-size: 11px;
+        line-height: 1.2;
+      }
     }
 
     /* VIP CARD CONTAINER */
@@ -870,7 +914,7 @@
 </head>
 <body>
 
-  <!-- Top Header Profissional -->
+  <!-- Top Header Profissional com Safe Area -->
   <header>
     <div class="header-content">
       <div class="logo-area">
@@ -915,11 +959,23 @@
       </div>
     </div>
 
-    <!-- Navegação de Abas -->
+    <!-- Navegação de Abas Totalmente Adaptável -->
     <div class="tab-navigation">
-      <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">📸 Novo Registro</button>
-      <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">📊 Planilha & Histórico</button>
-      <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">📍 Presentes no Local (<span id="tabCountPresentes">0</span>)</button>
+      <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">
+        <span class="tab-icon">📸</span>
+        <span class="tab-label">Novo Registro</span>
+      </button>
+      <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">Planilha & Histórico</span>
+      </button>
+      <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">
+        <span class="tab-icon">📍</span>
+        <span class="tab-label">
+          Presentes no Local
+          <span class="tab-count-badge" id="tabCountPresentes">0</span>
+        </span>
+      </button>
     </div>
 
     <!-- ABA: NOVO REGISTRO -->
@@ -1509,7 +1565,6 @@
       });
 
       list.forEach(r => {
-        // Ao trocar o dia, injeta o cabeçalho e avança o tema de cor
         if (r.date !== currentDate) {
           currentDate = r.date;
           dayThemeIndex = (dayThemeIndex + 1) % dayColorThemesCount;
@@ -1712,7 +1767,6 @@
         `"${(r.notes || '').replace(/"/g, '""')}"`
       ]);
 
-      // \uFEFF força o Excel a reconhecer caracteres especiais em português
       const csv = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\r\n");
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement("a");
