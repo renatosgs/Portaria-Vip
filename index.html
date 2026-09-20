@@ -85,19 +85,36 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
     body {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
       background-color: var(--bg-body);
       background-image:
         radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37, 99, 235, 0.15), transparent),
         radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.05), transparent 40%);
       background-attachment: fixed;
       color: var(--text-main);
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: 70px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    input, textarea, select {
+      -webkit-user-select: text;
+      user-select: text;
+      touch-action: auto;
     }
 
     ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -109,9 +126,9 @@
       background: rgba(10, 15, 28, 0.88);
       border-bottom: 1px solid var(--border);
       padding: max(14px, env(safe-area-inset-top)) 24px 14px 24px;
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 80;
+      flex-shrink: 0;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
@@ -154,7 +171,20 @@
     .icon-btn { width: 36px; height: 36px; border-radius: 10px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
     .icon-btn:hover { background: #18233d; color: #fff; border-color: rgba(255, 255, 255, 0.2); }
 
-    .main-container { max-width: 1180px; width: 100%; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 24px; }
+    .main-container {
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 20px max(24px, env(safe-area-inset-bottom)) 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
 
     .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
     @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -371,7 +401,7 @@
     }
 
     @media print {
-      body { background: white !important; color: black !important; padding: 0 !important; }
+      body { background: white !important; color: black !important; padding: 0 !important; overflow: visible !important; height: auto !important; }
       body * { visibility: hidden; }
 
       body.printing-ticket #ticketPrintArea,
@@ -1969,7 +1999,6 @@
       if (changed) persistData();
     }
 
-    // Service Worker opcional — fallback silencioso (não gera erro se sw.js não existir)
     async function registerServiceWorker() {
       if (!('serviceWorker' in navigator)) return;
       if (!window.isSecureContext) return;
