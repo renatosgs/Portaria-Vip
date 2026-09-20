@@ -3,172 +3,914 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Portaria VIP - Controle de Acesso e Placas</title>
+  <title>Portaria VIP Pro - Controle de Acesso, Placas e Pedestres</title>
   
   <!-- PWA & iOS Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Portaria VIP">
-  <meta name="theme-color" content="#0b0f19">
+  <meta name="theme-color" content="#070b14">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
 
   <!-- Tesseract.js para Reconhecimento OCR de Placas -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     :root {
-      --bg-main: #0b0f19;
-      --bg-card: #131d31;
+      --bg-main: #070b14;
+      --bg-surface: #0e1526;
+      --bg-card: #131d33;
+      --bg-card-hover: #18243f;
       --gold: #f59e0b;
       --gold-light: #fbbf24;
       --gold-glow: rgba(245, 158, 11, 0.25);
       --green: #10b981;
+      --green-light: #34d399;
       --green-glow: rgba(16, 185, 129, 0.25);
       --red: #ef4444;
+      --red-light: #f87171;
       --red-glow: rgba(239, 68, 68, 0.25);
       --blue: #3b82f6;
+      --blue-light: #60a5fa;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --border: #23314e;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --text-subtle: #64748b;
+      --border: #202d48;
+      --border-focus: #3b82f6;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+      /* Paletas para separação visual de dias na planilha */
+      --day-0-bg: rgba(59, 130, 246, 0.08);
+      --day-0-border: #3b82f6;
+      --day-0-tag: #60a5fa;
+      --day-0-header: linear-gradient(90deg, #1e3a8a 0%, #172554 100%);
+
+      --day-1-bg: rgba(245, 158, 11, 0.08);
+      --day-1-border: #f59e0b;
+      --day-1-tag: #fbbf24;
+      --day-1-header: linear-gradient(90deg, #78350f 0%, #451a03 100%);
+
+      --day-2-bg: rgba(16, 185, 129, 0.08);
+      --day-2-border: #10b981;
+      --day-2-tag: #34d399;
+      --day-2-header: linear-gradient(90deg, #064e3b 0%, #022c22 100%);
+
+      --day-3-bg: rgba(139, 92, 246, 0.08);
+      --day-3-border: #8b5cf6;
+      --day-3-tag: #a78bfa;
+      --day-3-header: linear-gradient(90deg, #4c1d95 0%, #2e1065 100%);
+
+      --day-4-bg: rgba(6, 182, 212, 0.08);
+      --day-4-border: #06b6d4;
+      --day-4-tag: #22d3ee;
+      --day-4-header: linear-gradient(90deg, #164e63 0%, #083344 100%);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
-    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 50px; }
-
-    header {
-      background: linear-gradient(180deg, #131d31 0%, #0b0f19 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
-      position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px);
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
     }
-    .header-content { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(180deg, #10182b 0%, #080d19 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+    }
+    .header-content {
+      max-width: 1060px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     .logo-area { display: flex; align-items: center; gap: 12px; }
     .logo-badge {
-      width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold) 0%, #b45309 100%);
-      border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800;
+      width: 46px; height: 46px;
+      background: linear-gradient(135deg, var(--gold) 0%, #b45309 100%);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 18px var(--gold-glow);
     }
-    .logo-title { font-size: 20px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, var(--gold-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .logo-subtitle { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+    .logo-title {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      background-color: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--green);
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .clock-display {
+      font-size: 16px;
+      font-weight: 800;
+      font-family: 'Courier New', monospace;
+      color: var(--gold-light);
+      background: rgba(245, 158, 11, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .date-display {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: capitalize;
+    }
 
-    .main-container { max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+    /* CONTAINER PRINCIPAL */
+    .main-container {
+      max-width: 1060px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    /* CARDS DE ESTATÍSTICA */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    .stat-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; position: relative; }
-    .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+
+    .stat-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
     .stat-card.patio::before { background-color: var(--gold); }
+    .stat-card.pedestres::before { background-color: var(--cyan); }
     .stat-card.entradas::before { background-color: var(--green); }
     .stat-card.saidas::before { background-color: var(--red); }
-    .stat-card.total::before { background-color: var(--blue); }
-    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; }
-    .stat-value { font-size: 22px; font-weight: 800; color: #fff; }
-
-    .tab-navigation { display: flex; background-color: #0e1626; border: 1px solid var(--border); border-radius: 14px; padding: 4px; gap: 4px; }
-    .tab-btn {
-      flex: 1; padding: 12px 8px; border: none; background: transparent; color: var(--text-muted);
-      font-size: 14px; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    .stat-card.total::before { background-color: var(--purple); }
+    
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
-    .tab-btn.active { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+      color: #fff;
+    }
 
-    .vip-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35); }
-    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+    /* TABS */
+    .tab-navigation {
+      display: flex;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 5px;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #1f2b44 0%, #151e32 100%);
+      color: var(--gold-light);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    /* VIP CARD CONTAINER */
+    .vip-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.5px;
+    }
     .section-title span { color: var(--gold); }
 
-    /* Botão de Câmera */
+    /* SELETOR DE MOVIMENTAÇÃO */
+    .movement-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .mov-btn {
+      border: 2px solid var(--border);
+      background: #0d1424;
+      padding: 16px;
+      border-radius: 14px;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+    }
+    .mov-btn:hover { border-color: #334469; }
+    .mov-btn.entrada.active {
+      background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+      border-color: var(--green);
+      color: #34d399;
+      box-shadow: 0 0 20px var(--green-glow);
+    }
+    .mov-btn.saida.active {
+      background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+      border-color: var(--red);
+      color: #f87171;
+      box-shadow: 0 0 20px var(--red-glow);
+    }
+
+    /* TIPO: CARRO / MOTO / CAMINHÃO / PEDESTRE */
+    .vehicle-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) {
+      .vehicle-selector { grid-template-columns: repeat(2, 1fr); }
+    }
+    .veh-btn {
+      border: 2px solid var(--border);
+      background: #0d1424;
+      padding: 14px 8px;
+      border-radius: 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .veh-btn:hover { border-color: #3b4d75; }
+    .veh-btn.active {
+      background: linear-gradient(135deg, #1a2744 0%, #141d33 100%);
+      border-color: var(--gold);
+      color: #fff;
+      box-shadow: 0 4px 16px var(--gold-glow);
+    }
+    .veh-btn.active.pedestre {
+      border-color: var(--cyan);
+      box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+    }
+
+    /* CÂMERA E FOTO */
     .camera-hero {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: radial-gradient(circle, #1a2744 0%, #0d1525 100%); border: 2px dashed #2d416b;
-      border-radius: 16px; padding: 22px 16px; text-align: center; cursor: pointer; margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #1a2748 0%, #0e1526 100%);
+      border: 2px dashed #2a3d66;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 18px;
+      transition: all 0.25s ease;
+    }
+    .camera-hero:hover {
+      border-color: var(--gold);
+      background: radial-gradient(circle, #20315a 0%, #111a2f 100%);
     }
     .camera-icon-circle {
-      width: 74px; height: 74px; border-radius: 50%; background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
-      display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 6px 20px var(--gold-glow); margin-bottom: 10px;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      box-shadow: 0 6px 20px var(--gold-glow);
+      margin-bottom: 8px;
+      transition: transform 0.2s;
     }
+    .camera-hero:hover .camera-icon-circle { transform: scale(1.06); }
 
-    /* Entrada / Saída */
-    .movement-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-    .mov-btn {
-      border: 2px solid var(--border); background: #0f172a; padding: 14px; border-radius: 14px;
-      color: var(--text-muted); font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    .photo-preview-box {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: #0d1424;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
     }
-    .mov-btn.entrada.active { background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); border-color: var(--green); color: #34d399; }
-    .mov-btn.saida.active { background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border-color: var(--red); color: #f87171; }
-
-    /* Carro / Moto / Caminhão */
-    .vehicle-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
-    .veh-btn {
-      border: 2px solid var(--border); background: #0f172a; padding: 12px 6px; border-radius: 14px;
-      color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    .photo-preview-img {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--gold);
     }
-    .veh-btn.active { background: linear-gradient(135deg, #1e293b 0%, #1e3a8a 100%); border-color: var(--gold); color: #fff; box-shadow: 0 4px 15px var(--gold-glow); }
 
     /* Placa Mercosul */
-    .plate-box { background-color: #0b111e; border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .mercosul-plate { width: 230px; height: 75px; background: #fff; border: 3px solid #000; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
-    .mercosul-header { background: #003399; height: 20px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; color: white; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
-    .plate-input { background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 26px; font-weight: 900; text-align: center; color: #000; letter-spacing: 4px; text-transform: uppercase; width: 100%; height: 50px; outline: none; }
-
-    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-    @media (max-width: 500px) { .input-grid { grid-template-columns: 1fr; } }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-    .form-input { background: #0b111e; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #fff; outline: none; }
-    .form-input:focus { border-color: var(--gold); }
-
-    .btn-save-record {
-      width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%); color: #0b0f19; border: none;
-      padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    .plate-box {
+      background-color: #0b111e;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .mercosul-plate {
+      width: 230px;
+      height: 75px;
+      background: #fff;
+      border: 3px solid #000;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .mercosul-header {
+      background: #003399;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      color: white;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+    .plate-input {
+      background: transparent;
+      border: none;
+      font-family: 'Courier New', monospace;
+      font-size: 26px;
+      font-weight: 900;
+      text-align: center;
+      color: #000;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      width: 100%;
+      height: 52px;
+      outline: none;
     }
 
-    /* Planilha */
-    .spreadsheet-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: #0c1220; }
-    table.spreadsheet { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 700px; }
-    table.spreadsheet th { background: #131c30; padding: 12px 14px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); }
-    table.spreadsheet td { padding: 12px 14px; border-bottom: 1px solid #1a253d; vertical-align: middle; }
-    .badge-mov { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 800; }
-    .badge-mov.entrada { background: rgba(16,185,129,0.18); color: #34d399; }
-    .badge-mov.saida { background: rgba(239,68,68,0.18); color: #f87171; }
-    .badge-plate { font-family: 'Courier New', monospace; font-weight: 900; background: #002244; color: #fff; padding: 3px 8px; border-radius: 6px; }
+    /* Informações de Pedestre */
+    .pedestrian-notice {
+      display: none;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(14, 165, 233, 0.05) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      align-items: center;
+      gap: 14px;
+    }
+    .pedestrian-notice-icon {
+      font-size: 30px;
+      background: rgba(6, 182, 212, 0.2);
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-    .btn-export { background: linear-gradient(135deg, #10b981 0%, #047857 100%); border: none; color: white; padding: 10px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    /* INPUTS DO FORMULÁRIO */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 650px) { .input-grid { grid-template-columns: 1fr; } }
+    
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .label-hint { font-size: 10px; color: var(--text-subtle); font-weight: 500; }
+    .form-input {
+      background: #0b111e;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 15px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    }
+    .cpf-status-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: none;
+      font-weight: 700;
+    }
+    .cpf-status-badge.valid { display: inline-block; background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .cpf-status-badge.invalid { display: inline-block; background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    /* BOTÃO SALVAR */
+    .btn-save-record {
+      width: 100%;
+      background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
+      color: #070b14;
+      border: none;
+      padding: 17px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px var(--gold-glow);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-save-record:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+    .btn-save-record:active { transform: translateY(1px); }
+
+    /* CONTROLES DA PLANILHA */
+    .table-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .filter-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .select-filter {
+      background: #0b111e;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    .select-filter:focus { border-color: var(--gold); }
+
+    .action-buttons-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-export-excel { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: white; }
+    .btn-print { background: #1f293d; color: #cbd5e1; border: 1px solid var(--border); }
+
+    /* TABELA DA PLANILHA */
+    .spreadsheet-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #090e1a;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+    table.spreadsheet {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      text-align: left;
+      font-size: 13px;
+      min-width: 880px;
+    }
+    table.spreadsheet th {
+      background: #111a2f;
+      padding: 14px 12px;
+      color: var(--text-muted);
+      font-weight: 700;
+      border-bottom: 2px solid #1e2c4a;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.spreadsheet td {
+      padding: 12px;
+      border-bottom: 1px solid #162035;
+      vertical-align: middle;
+    }
+
+    /* SEPARADOR VISUAL DE DIAS */
+    tr.day-divider-row td {
+      padding: 12px 16px !important;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border-top: 2px solid rgba(255, 255, 255, 0.12);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    .day-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .day-count-badge {
+      margin-left: 10px;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 2px 9px;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* LINHAS COM CORES ALTERNADAS POR DIA */
+    tr.day-theme-0 { background-color: var(--day-0-bg); }
+    tr.day-theme-0 td:first-child { border-left: 4px solid var(--day-0-border); }
+
+    tr.day-theme-1 { background-color: var(--day-1-bg); }
+    tr.day-theme-1 td:first-child { border-left: 4px solid var(--day-1-border); }
+
+    tr.day-theme-2 { background-color: var(--day-2-bg); }
+    tr.day-theme-2 td:first-child { border-left: 4px solid var(--day-2-border); }
+
+    tr.day-theme-3 { background-color: var(--day-3-bg); }
+    tr.day-theme-3 td:first-child { border-left: 4px solid var(--day-3-border); }
+
+    tr.day-theme-4 { background-color: var(--day-4-bg); }
+    tr.day-theme-4 td:first-child { border-left: 4px solid var(--day-4-border); }
+
+    /* BADGES & ELEMENTOS VISUAIS DA TABELA */
+    .badge-mov {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .badge-mov.entrada {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .badge-mov.saida {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .badge-plate {
+      font-family: 'Courier New', monospace;
+      font-weight: 900;
+      background: #002b5c;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #1a56a6;
+      letter-spacing: 1px;
+      display: inline-block;
+    }
+    .badge-pedestre {
+      background: rgba(6, 182, 212, 0.15);
+      color: #22d3ee;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      font-weight: 800;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .cpf-text {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+    }
+    .person-name { font-weight: 700; color: #fff; }
+
+    .photo-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid #293859;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .photo-thumb:hover { transform: scale(1.1); border-color: var(--gold); }
+
+    .btn-quick-saida {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #f87171;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-quick-saida:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--red);
+    }
+
+    .btn-del-record {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+    .btn-del-record:hover { color: #f87171; }
+
+    /* MODAL DE FOTO */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      max-width: 500px;
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+    .modal-img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #000;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: #23314e;
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* TOAST DE NOTIFICAÇÃO */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #111a2f;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 280px;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast.success { border-left: 5px solid var(--green); }
+    .toast.error { border-left: 5px solid var(--red); }
+    .toast.info { border-left: 5px solid var(--blue); }
+
+    /* IMPRESSÃO / RELATÓRIO PDF */
+    @media print {
+      body { background: white !important; color: black !important; padding: 0 !important; }
+      header, .tab-navigation, .stats-grid, .table-controls, .btn-save-record, .action-buttons-bar { display: none !important; }
+      #tabContentRegistro, #tabContentPatio { display: none !important; }
+      #tabContentPlanilha { display: block !important; }
+      table.spreadsheet { width: 100% !important; min-width: 100% !important; border: 1px solid #000; }
+      table.spreadsheet th, table.spreadsheet td { border: 1px solid #ddd !important; color: #000 !important; background: transparent !important; }
+      .badge-plate, .badge-mov, .badge-pedestre { border: 1px solid #000 !important; background: none !important; color: #000 !important; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Top Header -->
+  <!-- Top Header Profissional -->
   <header>
     <div class="header-content">
       <div class="logo-area">
         <div class="logo-badge">🛡️</div>
         <div>
-          <div class="logo-title">PORTARIA VIP</div>
-          <div class="logo-subtitle">Reconhecimento & Controle</div>
+          <div class="logo-title">PORTARIA VIP PRO</div>
+          <div class="logo-subtitle">
+            <span class="status-dot"></span> Controle Integrado • Veículos & Pedestres
+          </div>
         </div>
       </div>
-      <div id="clockTime" style="font-weight: 700; color: var(--gold-light);">--:--:--</div>
+      <div class="header-right">
+        <div class="clock-display" id="clockTime">--:--:--</div>
+        <div class="date-display" id="clockDate">Hoje</div>
+      </div>
     </div>
   </header>
 
   <div class="main-container">
 
-    <!-- Indicadores no Topo -->
+    <!-- Indicadores no Topo (Estatísticas em Tempo Real) -->
     <div class="stats-grid">
       <div class="stat-card patio">
-        <span class="stat-label">No Pátio Agora</span>
+        <span class="stat-label">🅿️ Veículos no Pátio</span>
         <span class="stat-value" id="statPatio">0</span>
       </div>
+      <div class="stat-card pedestres">
+        <span class="stat-label">🚶 Pedestres no Local</span>
+        <span class="stat-value" id="statPedestres">0</span>
+      </div>
       <div class="stat-card entradas">
-        <span class="stat-label">Entradas Hoje</span>
+        <span class="stat-label">🟢 Entradas Hoje</span>
         <span class="stat-value" id="statEntradas">0</span>
       </div>
       <div class="stat-card saidas">
-        <span class="stat-label">Saídas Hoje</span>
+        <span class="stat-label">🔴 Saídas Hoje</span>
         <span class="stat-value" id="statSaidas">0</span>
       </div>
       <div class="stat-card total">
-        <span class="stat-label">Total Planilha</span>
+        <span class="stat-label">📊 Total Registros</span>
         <span class="stat-value" id="statTotal">0</span>
       </div>
     </div>
@@ -176,117 +918,198 @@
     <!-- Navegação de Abas -->
     <div class="tab-navigation">
       <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">📸 Novo Registro</button>
-      <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">📊 Planilha Integrada</button>
-      <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">🅿️ Veículos no Pátio</button>
+      <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">📊 Planilha & Histórico</button>
+      <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">📍 Presentes no Local (<span id="tabCountPresentes">0</span>)</button>
     </div>
 
     <!-- ABA: NOVO REGISTRO -->
     <div id="tabContentRegistro">
       <div class="vip-card">
         
-        <!-- Entrada / Saída -->
-        <div class="section-title"><span>01.</span> Movimentação</div>
+        <!-- 01. Entrada / Saída -->
+        <div class="section-title"><span>01.</span> Tipo de Movimentação</div>
         <div class="movement-selector">
           <button type="button" class="mov-btn entrada active" id="btnEntrada" onclick="setMovement('Entrada')">🟢 ENTRADA</button>
           <button type="button" class="mov-btn saida" id="btnSaida" onclick="setMovement('Saída')">🔴 SAÍDA</button>
         </div>
 
-        <!-- Carro / Moto / Caminhão -->
-        <div class="section-title"><span>02.</span> Tipo de Veículo</div>
+        <!-- 02. Categoria: Carro / Moto / Caminhão / Pedestre -->
+        <div class="section-title"><span>02.</span> Categoria de Acesso</div>
         <div class="vehicle-selector">
-          <button type="button" class="veh-btn active" id="btnCarro" onclick="setVehicleType('Carro')">
+          <button type="button" class="veh-btn active" id="btnCarro" onclick="setAccessType('Carro')">
             <span style="font-size: 26px;">🚗</span><span>Carro</span>
           </button>
-          <button type="button" class="veh-btn" id="btnMoto" onclick="setVehicleType('Moto')">
+          <button type="button" class="veh-btn" id="btnMoto" onclick="setAccessType('Moto')">
             <span style="font-size: 26px;">🏍️</span><span>Moto</span>
           </button>
-          <button type="button" class="veh-btn" id="btnCaminhao" onclick="setVehicleType('Caminhão')">
+          <button type="button" class="veh-btn" id="btnCaminhao" onclick="setAccessType('Caminhão')">
             <span style="font-size: 26px;">🚚</span><span>Caminhão</span>
+          </button>
+          <button type="button" class="veh-btn pedestre" id="btnPedestre" onclick="setAccessType('Pedestre')">
+            <span style="font-size: 26px;">🚶</span><span>Pedestre</span>
           </button>
         </div>
 
-        <!-- Abrir Câmera -->
-        <div class="section-title"><span>03.</span> Foto & Leitura da Placa</div>
+        <!-- Notificação de Pedestre -->
+        <div class="pedestrian-notice" id="pedestrianNotice">
+          <div class="pedestrian-notice-icon">🚶</div>
+          <div>
+            <strong style="color: #22d3ee; font-size: 14px;">Entrada / Saída de Pedestre Selecionada</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Placa não necessária. Cadastre o <strong>Nome Completo</strong> e o <strong>CPF</strong> para controle de acesso seguro.
+            </p>
+          </div>
+        </div>
+
+        <!-- 03. Identificação & Foto (Câmera / OCR) -->
+        <div class="section-title"><span>03.</span> Foto & Identificação</div>
         <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleNativeImage(this)">
 
         <div class="camera-hero" onclick="document.getElementById('nativeCameraInput').click()">
           <div class="camera-icon-circle">📸</div>
-          <strong style="font-size: 16px;">Abrir Câmera</strong>
-          <span style="font-size: 12px; color: var(--text-muted);">Toque para tirar foto da placa e ler automaticamente</span>
+          <strong style="font-size: 16px;" id="cameraHeroTitle">Tirar Foto da Placa</strong>
+          <span style="font-size: 12px; color: var(--text-muted);" id="cameraHeroSub">Toque para capturar com a câmera e ler automaticamente</span>
         </div>
 
-        <!-- Pré-visualização da Placa Mercosul -->
-        <div class="plate-box">
-          <div class="mercosul-plate">
-            <div class="mercosul-header"><span>BRASIL</span><span>MERCOSUL</span></div>
-            <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="8" oninput="this.value = this.value.toUpperCase()">
+        <!-- Preview da Foto Anexada -->
+        <div class="photo-preview-box" id="photoPreviewBox">
+          <img src="" id="photoPreviewImg" class="photo-preview-img" alt="Foto capturada">
+          <div style="flex: 1;">
+            <strong style="font-size: 13px; color: #fff;">Foto anexada com sucesso</strong>
+            <div id="photoStatusText" style="font-size: 11px; color: var(--text-muted);">Pronto para salvar</div>
           </div>
-          <span id="ocrStatus" style="font-size: 12px; color: var(--text-muted);">Tire a foto ou digite a placa acima</span>
+          <button type="button" onclick="removeAttachedPhoto()" style="background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 18px;">✕</button>
         </div>
 
-        <!-- Condutor e Destino -->
-        <div class="section-title"><span>04.</span> Dados do Registro</div>
+        <!-- Box de Placa Mercosul (Escondido em modo pedestre) -->
+        <div class="plate-card-wrapper" id="plateCardWrapper">
+          <div class="plate-box">
+            <div class="mercosul-plate">
+              <div class="mercosul-header"><span>BRASIL</span><span>MERCOSUL</span></div>
+              <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="8" oninput="formatPlateInput(this)">
+            </div>
+            <span id="ocrStatus" style="font-size: 12px; color: var(--text-muted);">Tire a foto ou digite a placa acima</span>
+          </div>
+        </div>
+
+        <!-- 04. Dados Pessoais & Destino -->
+        <div class="section-title"><span>04.</span> Dados da Pessoa & Destino</div>
         <div class="input-grid">
+          <!-- Nome / Condutor -->
           <div class="form-group">
-            <label>Condutor / Motorista</label>
-            <input type="text" id="inputDriver" class="form-input" placeholder="Ex: Roberto Carlos / Entregador">
+            <label id="labelPersonName">
+              <span>Nome do Condutor / Motorista</span>
+              <span class="label-hint">Obrigatório</span>
+            </label>
+            <input type="text" id="inputPersonName" class="form-input" placeholder="Ex: Roberto Carlos">
           </div>
+
+          <!-- CPF com Máscara e Validação -->
           <div class="form-group">
-            <label>Destino / Apartamento / Bloco</label>
-            <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 204 Bloco C">
+            <label>
+              <span>CPF (Documento)</span>
+              <span id="cpfValidationBadge" class="cpf-status-badge"></span>
+            </label>
+            <input type="text" id="inputCpf" class="form-input" placeholder="000.000.000-00" maxlength="14" oninput="handleCpfInput(this)">
           </div>
-        </div>
-        <div class="form-group" style="margin-bottom: 18px;">
-          <label>Observações</label>
-          <input type="text" id="inputNotes" class="form-input" placeholder="Ex: Carga e descarga autorizada">
         </div>
 
-        <button type="button" class="btn-save-record" onclick="saveRecord()">💾 REGISTRAR NA PLANILHA</button>
+        <div class="input-grid">
+          <!-- Destino -->
+          <div class="form-group">
+            <label>Destino / Apto / Bloco / Empresa</label>
+            <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 204 Bloco C ou Visita Gerência">
+          </div>
+
+          <!-- Observações -->
+          <div class="form-group">
+            <label>Observações / Crachá / Carga</label>
+            <input type="text" id="inputNotes" class="form-input" placeholder="Ex: Crachá #42 / Carga autorizada">
+          </div>
+        </div>
+
+        <button type="button" class="btn-save-record" onclick="saveRecord()">
+          💾 SALVAR E REGISTRAR NA PLANILHA
+        </button>
       </div>
     </div>
 
-    <!-- ABA: PLANILHA INTEGRADA -->
+    <!-- ABA: PLANILHA INTEGRADA COM CORES SEPARADAS POR DIA -->
     <div id="tabContentPlanilha" style="display: none;">
       <div class="vip-card">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
-          <input type="text" id="searchTable" class="form-input" placeholder="🔍 Buscar por placa ou condutor..." oninput="renderTable()" style="flex: 1; min-width: 200px;">
-          <button class="btn-export" onclick="exportToCSV()">📥 Baixar Planilha (Excel/CSV)</button>
+        
+        <!-- Controles, Busca e Filtros -->
+        <div class="table-controls">
+          <div class="filter-group">
+            <input type="text" id="searchTable" class="form-input" placeholder="🔍 Buscar placa, nome, CPF, destino..." oninput="renderTable()" style="min-width: 230px; flex: 2;">
+            
+            <select id="filterType" class="select-filter" onchange="renderTable()">
+              <option value="ALL">Todos os Tipos</option>
+              <option value="Pedestre">🚶 Pedestres</option>
+              <option value="Carro">🚗 Carros</option>
+              <option value="Moto">🏍️ Motos</option>
+              <option value="Caminhão">🚚 Caminhões</option>
+            </select>
+
+            <select id="filterMovement" class="select-filter" onchange="renderTable()">
+              <option value="ALL">Todas Movimentações</option>
+              <option value="Entrada">🟢 Apenas Entradas</option>
+              <option value="Saída">🔴 Apenas Saídas</option>
+            </select>
+          </div>
+
+          <div class="action-buttons-bar">
+            <button class="btn-action btn-print" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="btn-action btn-export-excel" onclick="exportToCSV()">📥 Baixar Planilha (Excel/CSV)</button>
+          </div>
         </div>
 
+        <!-- Tabela Estilizada -->
         <div class="spreadsheet-wrapper">
           <table class="spreadsheet">
             <thead>
               <tr>
-                <th>Horário</th>
-                <th>Foto</th>
-                <th>Placa</th>
+                <th style="width: 105px;">Horário</th>
+                <th style="width: 55px; text-align: center;">Foto</th>
+                <th>Placa / Identificação</th>
                 <th>Tipo</th>
                 <th>Movimento</th>
-                <th>Condutor</th>
+                <th>Nome / Condutor</th>
+                <th>CPF</th>
                 <th>Destino</th>
-                <th>Ações</th>
+                <th>Obs</th>
+                <th style="text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="spreadsheetBody"></tbody>
           </table>
         </div>
+
       </div>
     </div>
 
-    <!-- ABA: VEÍCULOS NO PÁTIO -->
+    <!-- ABA: PRESENTES NO LOCAL (PÁTIO + PEDESTRES) -->
     <div id="tabContentPatio" style="display: none;">
       <div class="vip-card">
-        <div class="section-title"><span>🅿️</span> Veículos Atualmente no Pátio</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <div class="section-title" style="margin-bottom: 0;"><span>📍</span> Pessoas e Veículos no Local Atualmente</div>
+          <div style="font-size: 13px; color: var(--text-muted);">
+            Total presente: <strong id="totalPresentesBadge" style="color: var(--gold-light);">0</strong>
+          </div>
+        </div>
+
         <div class="spreadsheet-wrapper">
           <table class="spreadsheet">
             <thead>
               <tr>
-                <th>Entrada</th>
-                <th>Placa</th>
+                <th>Horário de Entrada</th>
+                <th>Identificação / Placa</th>
                 <th>Tipo</th>
-                <th>Condutor</th>
+                <th>Nome / Pessoa</th>
+                <th>CPF</th>
                 <th>Destino</th>
-                <th>Ação</th>
+                <th>Tempo no Local</th>
+                <th style="text-align: center;">Ação de Saída</th>
               </tr>
             </thead>
             <tbody id="patioBody"></tbody>
@@ -297,51 +1120,172 @@
 
   </div>
 
+  <!-- MODAL DE VISUALIZAÇÃO DE FOTO / COMPROVANTE -->
+  <div class="modal-overlay" id="photoModal" onclick="closePhotoModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closePhotoModal()">✕</button>
+      <h3 id="modalTitle" style="font-size: 16px; color: #fff;">Visualização do Registro</h3>
+      <img src="" id="modalImg" class="modal-img" alt="Foto ampliada">
+      <div id="modalDetails" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;"></div>
+    </div>
+  </div>
+
+  <!-- CONTAINER DE NOTIFICAÇÕES (TOASTS) -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
+    // ESTADO DO APLICATIVO
     let appState = {
       movement: 'Entrada',
-      vehicleType: 'Carro',
+      accessType: 'Carro',
       currentPhotoBase64: '',
-      records: JSON.parse(localStorage.getItem('PORTARIA_VIP_DATA') || '[]')
+      records: []
     };
 
+    // Carregar dados armazenados no LocalStorage com segurança
+    try {
+      const saved = localStorage.getItem('PORTARIA_VIP_DATA');
+      if (saved) {
+        appState.records = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Erro ao ler localStorage', e);
+      appState.records = [];
+    }
+
+    // RELÓGIO E DATA
     function updateClock() {
-      document.getElementById('clockTime').textContent = new Date().toLocaleTimeString('pt-BR');
+      const now = new Date();
+      document.getElementById('clockTime').textContent = now.toLocaleTimeString('pt-BR');
+      
+      const options = { weekday: 'short', day: '2-digit', month: 'short' };
+      document.getElementById('clockDate').textContent = now.toLocaleDateString('pt-BR', options);
     }
     setInterval(updateClock, 1000);
     updateClock();
 
+    // ALTERNAR MOVIMENTAÇÃO (Entrada / Saída)
     function setMovement(mov) {
       appState.movement = mov;
       document.getElementById('btnEntrada').classList.toggle('active', mov === 'Entrada');
       document.getElementById('btnSaida').classList.toggle('active', mov === 'Saída');
     }
 
-    function setVehicleType(t) {
-      appState.vehicleType = t;
-      document.getElementById('btnCarro').classList.toggle('active', t === 'Carro');
-      document.getElementById('btnMoto').classList.toggle('active', t === 'Moto');
-      document.getElementById('btnCaminhao').classList.toggle('active', t === 'Caminhão');
+    // ALTERNAR CATEGORIA DE ACESSO (Carro, Moto, Caminhão, Pedestre)
+    function setAccessType(type) {
+      appState.accessType = type;
+      
+      ['Carro', 'Moto', 'Caminhão', 'Pedestre'].forEach(t => {
+        const btn = document.getElementById(`btn${t === 'Caminhão' ? 'Caminhao' : t}`);
+        if (btn) btn.classList.toggle('active', t === type);
+      });
+
+      const isPedestre = (type === 'Pedestre');
+      const plateWrapper = document.getElementById('plateCardWrapper');
+      const pedestrianNotice = document.getElementById('pedestrianNotice');
+      const cameraHeroTitle = document.getElementById('cameraHeroTitle');
+      const cameraHeroSub = document.getElementById('cameraHeroSub');
+      const labelPersonName = document.getElementById('labelPersonName');
+      const inputPersonName = document.getElementById('inputPersonName');
+
+      if (isPedestre) {
+        plateWrapper.style.display = 'none';
+        pedestrianNotice.style.display = 'flex';
+        cameraHeroTitle.textContent = 'Tirar Foto do Pedestre / Documento';
+        cameraHeroSub.textContent = 'Toque para capturar foto do visitante, crachá ou documento';
+        labelPersonName.innerHTML = '<span>Nome do Pedestre / Visitante</span> <span class="label-hint">Obrigatório</span>';
+        inputPersonName.placeholder = 'Ex: Maria Oliveira / Entregador / Prestador';
+      } else {
+        plateWrapper.style.display = 'block';
+        pedestrianNotice.style.display = 'none';
+        cameraHeroTitle.textContent = 'Tirar Foto da Placa';
+        cameraHeroSub.textContent = 'Toque para capturar com a câmera e ler automaticamente';
+        labelPersonName.innerHTML = '<span>Nome do Condutor / Motorista</span> <span class="label-hint">Obrigatório</span>';
+        inputPersonName.placeholder = 'Ex: Roberto Carlos / Entregador';
+      }
     }
 
-    function switchTab(tab) {
-      document.getElementById('tabContentRegistro').style.display = tab === 'registro' ? 'block' : 'none';
-      document.getElementById('tabContentPlanilha').style.display = tab === 'planilha' ? 'block' : 'none';
-      document.getElementById('tabContentPatio').style.display = tab === 'patio' ? 'block' : 'none';
-      document.getElementById('tabBtnRegistro').classList.toggle('active', tab === 'registro');
-      document.getElementById('tabBtnPlanilha').classList.toggle('active', tab === 'planilha');
-      document.getElementById('tabBtnPatio').classList.toggle('active', tab === 'patio');
-      if (tab === 'planilha') renderTable();
-      if (tab === 'patio') renderPatio();
+    // FORMATAÇÃO DE PLACA
+    function formatPlateInput(input) {
+      let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (val.length > 7) val = val.substring(0, 7);
+      input.value = val;
     }
 
+    // FORMATAÇÃO E VALIDAÇÃO DE CPF
+    function handleCpfInput(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.substring(0, 11);
+
+      // Máscara 000.000.000-00
+      if (v.length <= 11) {
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      }
+      input.value = v;
+
+      // Validação em tempo real com 11 dígitos
+      const rawCpf = input.value.replace(/\D/g, '');
+      const badge = document.getElementById('cpfValidationBadge');
+      if (rawCpf.length === 11) {
+        if (isValidCPF(rawCpf)) {
+          badge.className = 'cpf-status-badge valid';
+          badge.textContent = '✓ CPF Válido';
+        } else {
+          badge.className = 'cpf-status-badge invalid';
+          badge.textContent = '⚠️ CPF Inválido';
+        }
+      } else if (rawCpf.length > 0) {
+        badge.className = 'cpf-status-badge invalid';
+        badge.textContent = 'Incompleto';
+      } else {
+        badge.className = 'cpf-status-badge';
+        badge.textContent = '';
+      }
+    }
+
+    // ALGORITMO OFICIAL DE VALIDAÇÃO DE CPF
+    function isValidCPF(cpf) {
+      cpf = cpf.replace(/\D/g, '');
+      if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+      let sum = 0, rest;
+      for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+      rest = (sum * 10) % 11;
+      if (rest === 10 || rest === 11) rest = 0;
+      if (rest !== parseInt(cpf.substring(9, 10))) return false;
+      sum = 0;
+      for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+      rest = (sum * 10) % 11;
+      if (rest === 10 || rest === 11) rest = 0;
+      return rest === parseInt(cpf.substring(10, 11));
+    }
+
+    // CAPTURA DE FOTO E OCR
     function handleNativeImage(input) {
       if (input.files && input.files[0]) {
+        const file = input.files[0];
         const reader = new FileReader();
+        
         reader.onload = async function(e) {
           appState.currentPhotoBase64 = e.target.result;
+          
+          const previewBox = document.getElementById('photoPreviewBox');
+          const previewImg = document.getElementById('photoPreviewImg');
+          previewImg.src = e.target.result;
+          previewBox.style.display = 'flex';
+
           const status = document.getElementById('ocrStatus');
-          status.textContent = '⏳ Reconhecendo placa na foto...';
+          const photoStatusText = document.getElementById('photoStatusText');
+
+          if (appState.accessType === 'Pedestre') {
+            photoStatusText.textContent = 'Foto do pedestre/documento pronta';
+            showToast('Foto capturada com sucesso!', 'success');
+            return;
+          }
+
+          status.textContent = '⏳ Analisando foto e reconhecendo placa via OCR...';
+          photoStatusText.textContent = 'Reconhecendo placa...';
 
           if (window.Tesseract) {
             try {
@@ -351,49 +1295,137 @@
               if (match) {
                 document.getElementById('inputPlate').value = match[0];
                 status.textContent = '✅ Placa identificada: ' + match[0];
+                photoStatusText.textContent = 'Placa reconhecida: ' + match[0];
+                showToast(`Placa detectada: ${match[0]}`, 'success');
+                playBeep(880, 0.15);
                 return;
               }
-            } catch (err) {}
+            } catch (err) {
+              console.warn('OCR error:', err);
+            }
           }
-          status.textContent = '📸 Foto anexada. Confirme a placa no campo.';
+          status.textContent = '📸 Foto anexada. Digite ou confira a placa acima.';
+          photoStatusText.textContent = 'Foto anexada com sucesso';
+          showToast('Foto anexada!', 'info');
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
       }
     }
 
+    function removeAttachedPhoto() {
+      appState.currentPhotoBase64 = '';
+      document.getElementById('photoPreviewBox').style.display = 'none';
+      document.getElementById('photoPreviewImg').src = '';
+      document.getElementById('nativeCameraInput').value = '';
+      document.getElementById('ocrStatus').textContent = 'Tire a foto ou digite a placa acima';
+    }
+
+    // NAVEGAÇÃO DE ABAS
+    function switchTab(tab) {
+      document.getElementById('tabContentRegistro').style.display = tab === 'registro' ? 'block' : 'none';
+      document.getElementById('tabContentPlanilha').style.display = tab === 'planilha' ? 'block' : 'none';
+      document.getElementById('tabContentPatio').style.display = tab === 'patio' ? 'block' : 'none';
+      
+      document.getElementById('tabBtnRegistro').classList.toggle('active', tab === 'registro');
+      document.getElementById('tabBtnPlanilha').classList.toggle('active', tab === 'planilha');
+      document.getElementById('tabBtnPatio').classList.toggle('active', tab === 'patio');
+      
+      if (tab === 'planilha') renderTable();
+      if (tab === 'patio') renderPatio();
+    }
+
+    // SALVAR REGISTRO
     function saveRecord() {
-      const plate = document.getElementById('inputPlate').value.trim().toUpperCase();
-      if (!plate) return alert('Por favor, digite ou capture a placa do veículo.');
+      const isPedestre = (appState.accessType === 'Pedestre');
+      let plate = document.getElementById('inputPlate').value.trim().toUpperCase();
+      const personName = document.getElementById('inputPersonName').value.trim();
+      const cpf = document.getElementById('inputCpf').value.trim();
+      const destination = document.getElementById('inputDestination').value.trim();
+      const notes = document.getElementById('inputNotes').value.trim();
+
+      if (isPedestre) {
+        if (!personName) {
+          showToast('Informe o nome do pedestre/visitante.', 'error');
+          document.getElementById('inputPersonName').focus();
+          return;
+        }
+        plate = 'PEDESTRE';
+      } else {
+        if (!plate) {
+          showToast('Por favor, digite ou capture a placa do veículo.', 'error');
+          document.getElementById('inputPlate').focus();
+          return;
+        }
+        if (!personName) {
+          showToast('Informe o nome do condutor/motorista.', 'error');
+          document.getElementById('inputPersonName').focus();
+          return;
+        }
+      }
 
       const now = new Date();
       const rec = {
-        id: Date.now(),
+        id: Date.now() + Math.random().toString(36).substring(2, 6),
         date: now.toLocaleDateString('pt-BR'),
         time: now.toLocaleTimeString('pt-BR'),
         timestamp: now.getTime(),
         plate: plate,
         movement: appState.movement,
-        vehicleType: appState.vehicleType,
-        driver: document.getElementById('inputDriver').value.trim() || 'Não informado',
-        destination: document.getElementById('inputDestination').value.trim() || 'Geral',
-        notes: document.getElementById('inputNotes').value.trim() || '-',
+        vehicleType: appState.accessType,
+        driver: personName,
+        cpf: cpf || '-',
+        destination: destination || 'Geral',
+        notes: notes || '-',
         photo: appState.currentPhotoBase64
       };
 
       appState.records.unshift(rec);
-      localStorage.setItem('PORTARIA_VIP_DATA', JSON.stringify(appState.records));
+      try {
+        localStorage.setItem('PORTARIA_VIP_DATA', JSON.stringify(appState.records));
+      } catch (e) {
+        showToast('Aviso: Armazenamento cheio. Remova fotos antigas se necessário.', 'error');
+      }
 
       document.getElementById('inputPlate').value = '';
-      document.getElementById('inputDriver').value = '';
+      document.getElementById('inputPersonName').value = '';
+      document.getElementById('inputCpf').value = '';
       document.getElementById('inputDestination').value = '';
       document.getElementById('inputNotes').value = '';
-      appState.currentPhotoBase64 = '';
-      document.getElementById('ocrStatus').textContent = '✅ Registro gravado na planilha com sucesso!';
+      document.getElementById('cpfValidationBadge').className = 'cpf-status-badge';
+      removeAttachedPhoto();
+
+      playBeep(523.25, 0.2);
+      showToast(`Acesso registrado: ${rec.movement} de ${isPedestre ? 'Pedestre' : rec.plate}!`, 'success');
 
       renderStats();
-      alert(`Registro de ${rec.movement} salvo para a placa ${rec.plate}!`);
+      if (document.getElementById('tabContentPlanilha').style.display === 'block') renderTable();
+      if (document.getElementById('tabContentPatio').style.display === 'block') renderPatio();
     }
 
+    // CALCULAR PRESENTES NO LOCAL
+    function calculatePresentes() {
+      const sorted = [...appState.records].sort((a, b) => a.timestamp - b.timestamp);
+      const map = new Map();
+
+      sorted.forEach(r => {
+        let key = '';
+        if (r.vehicleType === 'Pedestre') {
+          key = 'PED_' + (r.cpf && r.cpf !== '-' ? r.cpf : r.driver.toLowerCase());
+        } else {
+          key = 'VEH_' + r.plate.toUpperCase();
+        }
+
+        if (r.movement === 'Entrada') {
+          map.set(key, r);
+        } else if (r.movement === 'Saída') {
+          map.delete(key);
+        }
+      });
+
+      return Array.from(map.values()).reverse();
+    }
+
+    // ATUALIZAR ESTATÍSTICAS
     function renderStats() {
       const today = new Date().toLocaleDateString('pt-BR');
       let ent = 0, sai = 0;
@@ -403,89 +1435,368 @@
           if (r.movement === 'Saída') sai++;
         }
       });
-      const patio = calculatePatio();
-      document.getElementById('statPatio').textContent = patio.length;
+
+      const presentes = calculatePresentes();
+      const veiculosPresentes = presentes.filter(p => p.vehicleType !== 'Pedestre').length;
+      const pedestresPresentes = presentes.filter(p => p.vehicleType === 'Pedestre').length;
+
+      document.getElementById('statPatio').textContent = veiculosPresentes;
+      document.getElementById('statPedestres').textContent = pedestresPresentes;
       document.getElementById('statEntradas').textContent = ent;
       document.getElementById('statSaidas').textContent = sai;
       document.getElementById('statTotal').textContent = appState.records.length;
+      
+      const tabCount = document.getElementById('tabCountPresentes');
+      if (tabCount) tabCount.textContent = presentes.length;
+      const badgeTotalPres = document.getElementById('totalPresentesBadge');
+      if (badgeTotalPres) badgeTotalPres.textContent = `${presentes.length} (${veiculosPresentes} veículos, ${pedestresPresentes} pedestres)`;
     }
 
-    function calculatePatio() {
-      const sorted = [...appState.records].sort((a,b) => a.timestamp - b.timestamp);
-      const map = new Map();
-      sorted.forEach(r => {
-        if (r.movement === 'Entrada') map.set(r.plate, r);
-        else if (r.movement === 'Saída') map.delete(r.plate);
-      });
-      return Array.from(map.values()).reverse();
+    // FORMATAR TEMPO DE PERMANÊNCIA
+    function getElapsedTime(timestamp) {
+      const diffMs = Date.now() - timestamp;
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'Agora mesmo';
+      if (diffMins < 60) return `${diffMins} min`;
+      const diffHours = Math.floor(diffMins / 60);
+      const remainingMins = diffMins % 60;
+      return `${diffHours}h ${remainingMins}m`;
     }
 
+    // RENDERIZAR PLANILHA COM CORES SEPARADAS POR DIA
     function renderTable() {
       const tbody = document.getElementById('spreadsheetBody');
-      const q = (document.getElementById('searchTable').value || '').toLowerCase();
-      const list = appState.records.filter(r => r.plate.toLowerCase().includes(q) || r.driver.toLowerCase().includes(q));
+      const query = (document.getElementById('searchTable').value || '').toLowerCase();
+      const filterType = document.getElementById('filterType').value;
+      const filterMovement = document.getElementById('filterMovement').value;
+
+      let list = appState.records.filter(r => {
+        const matchesQuery = 
+          (r.plate && r.plate.toLowerCase().includes(query)) ||
+          (r.driver && r.driver.toLowerCase().includes(query)) ||
+          (r.cpf && r.cpf.toLowerCase().includes(query)) ||
+          (r.destination && r.destination.toLowerCase().includes(query)) ||
+          (r.notes && r.notes.toLowerCase().includes(query));
+
+        const matchesType = (filterType === 'ALL' || r.vehicleType === filterType);
+        const matchesMov = (filterMovement === 'ALL' || r.movement === filterMovement);
+
+        return matchesQuery && matchesType && matchesMov;
+      });
+
+      // Ordenar por data/hora mais recente
+      list.sort((a, b) => b.timestamp - a.timestamp);
 
       if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#888;">Nenhum registro encontrado.</td></tr>';
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align: center; padding: 35px 20px; color: var(--text-muted);">
+              🔍 Nenhum registro encontrado para os filtros selecionados.
+            </td>
+          </tr>
+        `;
         return;
       }
 
-      tbody.innerHTML = list.map(r => `
-        <tr>
-          <td><strong>${r.time}</strong><br><small style="color:#888;">${r.date}</small></td>
-          <td>${r.photo ? `<img src="${r.photo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : '📷'}</td>
-          <td><span class="badge-plate">${r.plate}</span></td>
-          <td>${r.vehicleType === 'Moto' ? '🏍️' : (r.vehicleType === 'Caminhão' ? '🚚' : '🚗')} ${r.vehicleType}</td>
-          <td><span class="badge-mov ${r.movement === 'Entrada' ? 'entrada' : 'saida'}">${r.movement === 'Entrada' ? '🟢' : '🔴'} ${r.movement}</span></td>
-          <td>${r.driver}</td>
-          <td>${r.destination}</td>
-          <td>
-            ${r.movement === 'Entrada' ? `<button onclick="darSaida('${r.plate}', '${r.vehicleType}')" style="background:#1e293b;border:1px solid #334155;color:#fff;padding:4px 8px;border-radius:6px;cursor:pointer;">Dar Saída 🔴</button>` : '-'}
-          </td>
-        </tr>
-      `).join('');
+      let html = '';
+      let currentDate = null;
+      let dayThemeIndex = -1;
+      const dayColorThemesCount = 5;
+
+      const dayCounts = {};
+      list.forEach(r => {
+        dayCounts[r.date] = (dayCounts[r.date] || 0) + 1;
+      });
+
+      list.forEach(r => {
+        // Ao trocar o dia, injeta o cabeçalho e avança o tema de cor
+        if (r.date !== currentDate) {
+          currentDate = r.date;
+          dayThemeIndex = (dayThemeIndex + 1) % dayColorThemesCount;
+
+          let dayName = '';
+          try {
+            const parts = r.date.split('/');
+            if (parts.length === 3) {
+              const d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+              dayName = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+              dayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+            }
+          } catch(e) {}
+
+          const headerThemes = [
+            'var(--day-0-header)',
+            'var(--day-1-header)',
+            'var(--day-2-header)',
+            'var(--day-3-header)',
+            'var(--day-4-header)'
+          ];
+          const tagColors = [
+            'var(--day-0-tag)',
+            'var(--day-1-tag)',
+            'var(--day-2-tag)',
+            'var(--day-3-tag)',
+            'var(--day-4-tag)'
+          ];
+
+          html += `
+            <tr class="day-divider-row" style="background: ${headerThemes[dayThemeIndex]};">
+              <td colspan="10">
+                <span class="day-header-badge" style="color: ${tagColors[dayThemeIndex]};">
+                  📅 ${dayName ? dayName + ', ' : ''}${r.date}
+                </span>
+                <span class="day-count-badge">${dayCounts[r.date]} registro(s) neste dia</span>
+              </td>
+            </tr>
+          `;
+        }
+
+        const isPedestre = (r.vehicleType === 'Pedestre');
+        const iconType = isPedestre ? '🚶' : (r.vehicleType === 'Moto' ? '🏍️' : (r.vehicleType === 'Caminhão' ? '🚚' : '🚗'));
+
+        html += `
+          <tr class="day-theme-${dayThemeIndex}">
+            <td>
+              <strong style="font-size: 13px; color: #fff;">${r.time}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${r.date}</div>
+            </td>
+            <td style="text-align: center;">
+              ${r.photo ? `
+                <img src="${r.photo}" class="photo-thumb" onclick="openPhotoModal('${r.id}')" title="Clique para ampliar" alt="Foto">
+              ` : `<span style="font-size: 20px; opacity: 0.4;">📷</span>`}
+            </td>
+            <td>
+              ${isPedestre ? `
+                <span class="badge-pedestre">🚶 PEDESTRE</span>
+              ` : `
+                <span class="badge-plate">${r.plate}</span>
+              `}
+            </td>
+            <td>
+              <span style="font-size: 13px; font-weight: 600;">${iconType} ${r.vehicleType}</span>
+            </td>
+            <td>
+              <span class="badge-mov ${r.movement === 'Entrada' ? 'entrada' : 'saida'}">
+                ${r.movement === 'Entrada' ? '🟢 ENTRADA' : '🔴 SAÍDA'}
+              </span>
+            </td>
+            <td>
+              <div class="person-name">${escapeHTML(r.driver)}</div>
+            </td>
+            <td>
+              <span class="cpf-text">${r.cpf || '-'}</span>
+            </td>
+            <td>
+              <span style="font-size: 12px; color: #e2e8f0;">${escapeHTML(r.destination)}</span>
+            </td>
+            <td>
+              <span style="font-size: 11px; color: var(--text-muted);">${escapeHTML(r.notes)}</span>
+            </td>
+            <td style="text-align: center; white-space: nowrap;">
+              ${r.movement === 'Entrada' ? `
+                <button class="btn-quick-saida" onclick="darSaidaRapida('${r.id}')" title="Registrar saída deste acesso">
+                  Dar Saída 🔴
+                </button>
+              ` : `<span style="color: var(--text-subtle); font-size: 11px;">Finalizado</span>`}
+              <button class="btn-del-record" onclick="deleteRecord('${r.id}')" title="Excluir registro">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
     }
 
+    // RENDERIZAR PRESENTES NO LOCAL
     function renderPatio() {
       const tbody = document.getElementById('patioBody');
-      const patio = calculatePatio();
-      if (patio.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">Nenhum veículo estacionado.</td></tr>';
+      const presentes = calculatePresentes();
+
+      if (presentes.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 35px 20px; color: var(--text-muted);">
+              ✅ Nenhum veículo ou pedestre atualmente no local.
+            </td>
+          </tr>
+        `;
         return;
       }
-      tbody.innerHTML = patio.map(r => `
-        <tr>
-          <td>${r.time}</td>
-          <td><span class="badge-plate">${r.plate}</span></td>
-          <td>${r.vehicleType}</td>
-          <td>${r.driver}</td>
-          <td>${r.destination}</td>
-          <td><button onclick="darSaida('${r.plate}', '${r.vehicleType}')" style="background:#ef4444;border:none;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;">Registrar Saída</button></td>
-        </tr>
-      `).join('');
+
+      tbody.innerHTML = presentes.map(r => {
+        const isPedestre = (r.vehicleType === 'Pedestre');
+        const icon = isPedestre ? '🚶' : (r.vehicleType === 'Moto' ? '🏍️' : (r.vehicleType === 'Caminhão' ? '🚚' : '🚗'));
+        const elapsed = getElapsedTime(r.timestamp);
+
+        return `
+          <tr>
+            <td>
+              <strong>${r.time}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${r.date}</div>
+            </td>
+            <td>
+              ${isPedestre ? `
+                <span class="badge-pedestre">🚶 PEDESTRE</span>
+              ` : `
+                <span class="badge-plate">${r.plate}</span>
+              `}
+            </td>
+            <td>${icon} ${r.vehicleType}</td>
+            <td><strong style="color: #fff;">${escapeHTML(r.driver)}</strong></td>
+            <td><span class="cpf-text">${r.cpf || '-'}</span></td>
+            <td>${escapeHTML(r.destination)}</td>
+            <td>
+              <span style="background: rgba(245, 158, 11, 0.15); color: var(--gold-light); padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">
+                ⏱️ ${elapsed}
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <button onclick="darSaidaRapida('${r.id}')" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border: none; color: #fff; padding: 7px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);">
+                Registrar Saída 🔴
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    function darSaida(plate, tipo) {
+    // DAR SAÍDA RÁPIDA (Preenche automaticamente todos os dados)
+    function darSaidaRapida(recordId) {
+      const rec = appState.records.find(r => r.id === recordId);
+      if (!rec) return;
+
       switchTab('registro');
       setMovement('Saída');
-      setVehicleType(tipo);
-      document.getElementById('inputPlate').value = plate;
+      setAccessType(rec.vehicleType);
+
+      if (rec.vehicleType !== 'Pedestre') {
+        document.getElementById('inputPlate').value = rec.plate;
+      }
+      document.getElementById('inputPersonName').value = rec.driver !== 'Não informado' ? rec.driver : '';
+      document.getElementById('inputCpf').value = (rec.cpf && rec.cpf !== '-') ? rec.cpf : '';
+      if (rec.cpf && rec.cpf !== '-') handleCpfInput(document.getElementById('inputCpf'));
+      document.getElementById('inputDestination').value = rec.destination !== 'Geral' ? rec.destination : '';
+      document.getElementById('inputNotes').value = `Saída referente à entrada das ${rec.time}`;
+
+      showToast(`Dados de saída carregados para ${rec.driver}!`, 'info');
     }
 
+    // EXCLUIR REGISTRO
+    function deleteRecord(id) {
+      if (!confirm('Deseja realmente remover este registro?')) return;
+      appState.records = appState.records.filter(r => r.id !== id);
+      localStorage.setItem('PORTARIA_VIP_DATA', JSON.stringify(appState.records));
+      renderStats();
+      renderTable();
+      renderPatio();
+      showToast('Registro excluído com sucesso.', 'info');
+    }
+
+    // EXPORTAR PARA PLANILHA CSV / EXCEL COM CPF
     function exportToCSV() {
-      if (appState.records.length === 0) return alert('Nenhum registro para exportar.');
-      const headers = ["Data", "Hora", "Placa", "Veículo", "Movimento", "Condutor", "Destino", "Observações"];
+      if (appState.records.length === 0) {
+        showToast('Nenhum registro para exportar.', 'error');
+        return;
+      }
+
+      const headers = ["Data", "Hora", "Tipo", "Movimento", "Identificação/Placa", "Nome/Condutor", "CPF", "Destino", "Observações"];
       const rows = appState.records.map(r => [
-        `"${r.date}"`, `"${r.time}"`, `"${r.plate}"`, `"${r.vehicleType}"`, `"${r.movement}"`, `"${r.driver}"`, `"${r.destination}"`, `"${r.notes}"`
+        `"${r.date}"`,
+        `"${r.time}"`,
+        `"${r.vehicleType}"`,
+        `"${r.movement}"`,
+        `"${r.plate}"`,
+        `"${(r.driver || '').replace(/"/g, '""')}"`,
+        `"${(r.cpf || '').replace(/"/g, '""')}"`,
+        `"${(r.destination || '').replace(/"/g, '""')}"`,
+        `"${(r.notes || '').replace(/"/g, '""')}"`
       ]);
+
+      // \uFEFF força o Excel a reconhecer caracteres especiais em português
       const csv = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\r\n");
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `Portaria_VIP_${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `Portaria_VIP_Relatorio_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
+      showToast('Planilha CSV gerada com sucesso!', 'success');
     }
 
+    // MODAL DE VISUALIZAÇÃO DE FOTO
+    function openPhotoModal(recordId) {
+      const rec = appState.records.find(r => r.id === recordId);
+      if (!rec || !rec.photo) return;
+
+      document.getElementById('modalImg').src = rec.photo;
+      document.getElementById('modalTitle').textContent = `${rec.vehicleType === 'Pedestre' ? '🚶 Pedestre' : '🚗 Veículo'}: ${rec.plate}`;
+      document.getElementById('modalDetails').innerHTML = `
+        <strong>Pessoa:</strong> ${escapeHTML(rec.driver)} <br>
+        <strong>CPF:</strong> ${rec.cpf || '-'} <br>
+        <strong>Horário:</strong> ${rec.date} às ${rec.time} (${rec.movement}) <br>
+        <strong>Destino:</strong> ${escapeHTML(rec.destination)}
+      `;
+      document.getElementById('photoModal').style.display = 'flex';
+    }
+
+    function closePhotoModal() {
+      document.getElementById('photoModal').style.display = 'none';
+    }
+
+    // TOASTS MODERNOS
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = {
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️'
+      };
+
+      toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${escapeHTML(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.add('show');
+      });
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // SINTETIZADOR DE SOM SUAVE (Web Audio API)
+    function playBeep(freq = 600, duration = 0.1) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // UTILITÁRIO DE ESCAPE DE HTML
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // INICIALIZAÇÃO
     renderStats();
   </script>
 </body>
