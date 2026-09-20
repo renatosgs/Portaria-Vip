@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portaria Inteligente • Câmera ao Vivo com IA</title>
+<title>Portaria Inteligente • IA de Reconhecimento</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
@@ -12,260 +12,260 @@
 <style>
 :root{
   --bg-0:#070b18; --bg-1:#0b1224; --bg-2:#0f1629; --bg-3:#151d33;
-  --border:#22304d; --text:#e6ecff; --text-soft:#aab5d1; --text-muted:#6b779a;
-  --gold:#f5a623; --gold-light:#fbbf24; --cyan:#22d3ee;
-  --green:#22c55e; --red:#f43f5e; --blue:#3b82f6; --purple:#a855f7;
-  --radius:12px; --radius-lg:18px;
+  --border:#22304d; --border-soft:#1a2540;
+  --text:#e6ecff; --text-soft:#aab5d1; --text-muted:#6b779a;
+  --gold:#f5a623; --gold-light:#fbbf24; --gold-dark:#b97614;
+  --cyan:#22d3ee; --green:#22c55e; --green-dark:#15803d;
+  --red:#f43f5e; --red-dark:#9f1239; --blue:#3b82f6; --purple:#a855f7;
+  --radius-sm:8px; --radius:12px; --radius-lg:18px;
+  --shadow:0 10px 30px rgba(0,0,0,.45); --transition:.2s ease;
 }
-*{box-sizing:border-box;}
-body{margin:0;font-family:'Inter','Segoe UI',system-ui,sans-serif;
-  background:radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,.10), transparent 60%),
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,.10), transparent 60%),
     radial-gradient(1000px 500px at 100% 0%, rgba(245,166,35,.08), transparent 55%),
     var(--bg-0);
-  color:var(--text);min-height:100vh;padding:20px 16px 60px;-webkit-font-smoothing:antialiased;}
+  color:var(--text); min-height:100vh; padding:24px 18px 60px;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
 button{font-family:inherit;cursor:pointer;}
-input,select{font-family:inherit;}
-.container{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+input,select,button{font-family:inherit;}
+.container{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
 
-.header-top{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;
-  background:linear-gradient(135deg, rgba(21,29,51,.95), rgba(11,18,36,.95));
-  border:1px solid var(--border);border-radius:var(--radius-lg);gap:14px;flex-wrap:wrap;}
-.brand{display:flex;align-items:center;gap:12px;}
-.brand-logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--gold),#b97614);display:grid;place-items:center;color:#0b1224;}
-.brand-text h1{margin:0;font-size:15px;font-weight:800;color:#fff;}
-.brand-text p{margin:2px 0 0;font-size:10px;color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;}
-.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.ai-status{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:20px;
-  background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);
-  font-size:11px;font-weight:700;color:#86efac;}
+/* HEADER */
+.header-top{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;background:linear-gradient(135deg, rgba(21,29,51,.95), rgba(11,18,36,.95));border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);gap:16px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand-logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:grid;place-items:center;color:#0b1224;box-shadow:0 6px 20px rgba(245,166,35,.35);}
+.brand-text h1{margin:0;font-size:16px;font-weight:800;letter-spacing:.3px;color:#fff;}
+.brand-text p{margin:2px 0 0;font-size:11px;color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.clock-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;min-width:150px;text-align:right;}
+.clock-display{font-size:20px;font-weight:800;color:var(--gold-light);font-variant-numeric:tabular-nums;letter-spacing:1px;font-family:'JetBrains Mono',monospace;}
+.date-display{font-size:11px;color:var(--text-muted);text-transform:capitalize;margin-top:2px;}
+.header-tools{display:flex;gap:8px;}
+.icon-btn{width:40px;height:40px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-soft);display:grid;place-items:center;transition:var(--transition);}
+.icon-btn:hover{color:var(--gold-light);border-color:rgba(245,166,35,.45);transform:translateY(-1px);}
+.icon-btn.off{color:var(--text-muted);opacity:.6;}
+
+.ai-status{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:20px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);font-size:11px;font-weight:700;color:#86efac;letter-spacing:.5px;}
 .ai-status.loading{background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.35);color:var(--gold-light);}
 .ai-status.error{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.35);color:#fda4af;}
 .ai-dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
-.clock-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px;text-align:right;min-width:140px;}
-.clock-display{font-size:18px;font-weight:800;color:var(--gold-light);font-variant-numeric:tabular-nums;letter-spacing:1px;font-family:'JetBrains Mono',monospace;}
-.date-display{font-size:10px;color:var(--text-muted);text-transform:capitalize;margin-top:2px;}
 
-.vip-card{background:linear-gradient(180deg,var(--bg-2),var(--bg-1));border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:20px;display:flex;flex-direction:column;gap:16px;}
-.section-header{display:flex;align-items:center;gap:10px;}
-.section-number{width:30px;height:30px;border-radius:8px;background:rgba(245,166,35,.15);
-  color:var(--gold-light);border:1px solid rgba(245,166,35,.35);display:grid;place-items:center;
-  font-weight:800;font-size:12px;}
-.section-title-text{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#fff;}
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+.stat-card{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--bg-2),var(--bg-1));border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 18px 16px;transition:var(--transition);}
+.stat-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--gold));}
+.stat-card:hover{transform:translateY(-3px);border-color:var(--accent,var(--gold));box-shadow:0 14px 30px rgba(0,0,0,.5);}
+.stat-card.patio{--accent:var(--gold-light);}
+.stat-card.pedestres{--accent:var(--cyan);}
+.stat-card.entradas{--accent:var(--green);}
+.stat-card.saidas{--accent:var(--red);}
+.stat-card.total{--accent:var(--purple);}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+.stat-icon-wrap{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.05);color:var(--accent,var(--gold));}
+.stat-value{font-size:32px;font-weight:800;color:#fff;line-height:1;font-variant-numeric:tabular-nums;}
+.stat-desc{font-size:11px;color:var(--text-muted);margin-top:6px;}
 
-/* ===== CÂMERA AO VIVO ===== */
-.live-camera-section{
-  background:linear-gradient(180deg,#0a1120,#070b18);
-  border:1px solid rgba(34,197,94,.35);
-  border-radius:var(--radius-lg);padding:18px;
-  box-shadow:0 0 0 1px rgba(34,197,94,.1), 0 20px 50px rgba(0,0,0,.5);
-}
-.live-camera-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
-.live-badge{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:#86efac;letter-spacing:1px;}
-.live-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:pulse 1.2s infinite;}
+/* TABS */
+.tab-navigation{display:flex;gap:8px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px;flex-wrap:wrap;}
+.tab-btn{flex:1;min-width:180px;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;border-radius:var(--radius);background:transparent;border:1px solid transparent;color:var(--text-soft);font-weight:600;font-size:13px;transition:var(--transition);}
+.tab-btn:hover{background:var(--bg-3);color:#fff;}
+.tab-btn.active{background:linear-gradient(135deg,rgba(245,166,35,.18),rgba(245,166,35,.05));color:var(--gold-light);border-color:rgba(245,166,35,.35);box-shadow:inset 0 0 0 1px rgba(245,166,35,.15);}
+.tab-count-badge{background:var(--gold);color:#0b1224;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;}
 
-.camera-stage{position:relative;width:100%;background:#000;border-radius:14px;overflow:hidden;
-  aspect-ratio:4/3;max-height:520px;}
-.camera-stage video{width:100%;height:100%;object-fit:cover;display:block;}
+/* VIP CARD */
+.vip-card{background:linear-gradient(180deg,var(--bg-2),var(--bg-1));border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px;}
+.section-header{display:flex;align-items:center;gap:12px;}
+.section-number{width:32px;height:32px;border-radius:8px;background:rgba(245,166,35,.15);color:var(--gold-light);border:1px solid rgba(245,166,35,.35);display:grid;place-items:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.section-title-text{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#fff;}
 
-/* Overlay de escaneamento */
-.scan-overlay{position:absolute;inset:0;pointer-events:none;}
-.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:80%;height:22%;border:2px dashed rgba(245,166,35,.7);border-radius:10px;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.35);}
-.scan-line{position:absolute;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,#f5a623,transparent);
-  box-shadow:0 0 12px #f5a623;animation:scanMove 2s linear infinite;}
-@keyframes scanMove{0%{top:38%;}50%{top:60%;}100%{top:38%;}}
+/* MOVIMENTO */
+.movement-selector{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mov-btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border-radius:var(--radius);background:var(--bg-3);border:2px solid var(--border);color:var(--text-soft);font-weight:700;font-size:13px;letter-spacing:.6px;transition:var(--transition);}
+.mov-btn:hover{transform:translateY(-2px);}
+.mov-btn.entrada.active{background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(34,197,94,.05));border-color:var(--green);color:#86efac;box-shadow:0 0 0 3px rgba(34,197,94,.15);}
+.mov-btn.saida.active{background:linear-gradient(135deg,rgba(244,63,94,.22),rgba(244,63,94,.05));border-color:var(--red);color:#fda4af;box-shadow:0 0 0 3px rgba(244,63,94,.15);}
 
-/* Detecção visual */
-.detect-box{position:absolute;border:3px solid #22c55e;border-radius:8px;
-  box-shadow:0 0 20px rgba(34,197,94,.6);transition:all .2s;}
-.detect-box::before{content:attr(data-label);position:absolute;top:-22px;left:-3px;
-  background:#22c55e;color:#0b1224;font-size:10px;font-weight:800;padding:3px 8px;
-  border-radius:6px 6px 0 0;letter-spacing:.5px;white-space:nowrap;}
+/* VEÍCULOS */
+.vehicle-selector{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.veh-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;border-radius:var(--radius);background:var(--bg-3);border:2px solid var(--border);color:var(--text-soft);font-weight:600;font-size:12px;transition:var(--transition);}
+.veh-btn:hover{transform:translateY(-2px);color:#fff;border-color:var(--border-soft);}
+.veh-btn.active{background:linear-gradient(160deg,rgba(245,166,35,.20),rgba(245,166,35,.04));border-color:var(--gold);color:var(--gold-light);box-shadow:0 0 0 3px rgba(245,166,35,.15);}
+.veh-btn.pedestre.active{background:linear-gradient(160deg,rgba(34,211,238,.20),rgba(34,211,238,.04));border-color:var(--cyan);color:#67e8f9;box-shadow:0 0 0 3px rgba(34,211,238,.15);}
+.veh-btn .auto-badge{position:absolute;top:6px;right:6px;background:var(--green);color:#0b1224;font-size:8px;font-weight:800;padding:2px 6px;border-radius:10px;letter-spacing:.5px;}
 
-.camera-status{position:absolute;bottom:12px;left:12px;right:12px;
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-  background:rgba(7,11,24,.85);backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;}
-.camera-status-text{font-size:12px;color:var(--text);font-weight:600;flex:1;}
-.camera-status-text strong{color:var(--gold-light);}
-.camera-fps{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;
-  background:rgba(255,255,255,.05);padding:3px 8px;border-radius:6px;}
+/* AVISO PEDESTRE */
+.pedestrian-notice{display:none;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(34,211,238,.03));border:1px solid rgba(34,211,238,.35);}
+.pedestrian-notice.show{display:flex;}
+.pedestrian-notice-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;background:rgba(34,211,238,.18);color:var(--cyan);display:grid;place-items:center;}
 
-.live-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
-@media(max-width:600px){.live-controls{grid-template-columns:1fr;}}
-.btn-live{display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:16px;border:none;border-radius:var(--radius);
-  font-weight:800;font-size:13px;letter-spacing:.6px;transition:.2s;}
-.btn-live.start{background:linear-gradient(135deg,var(--green),#15803d);color:#fff;
-  box-shadow:0 10px 24px rgba(34,197,94,.30);}
-.btn-live.start:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(34,197,94,.42);}
-.btn-live.stop{background:linear-gradient(135deg,var(--red),#9f1239);color:#fff;
-  box-shadow:0 10px 24px rgba(244,63,94,.30);}
-.btn-live.stop:hover{transform:translateY(-2px);}
-.btn-live:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-
-/* Barra de progresso IA */
-.ai-progress{margin-top:12px;padding:10px 14px;background:var(--bg-3);border-radius:10px;border:1px solid var(--border);}
-.ai-progress-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);font-weight:600;margin-bottom:6px;}
-.ai-progress-track{height:6px;border-radius:20px;background:var(--bg-0);overflow:hidden;}
-.ai-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--gold));transition:width .35s;border-radius:20px;}
-
-/* Config */
-.config-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
-.config-item{display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:var(--bg-3);
-  border:1px solid var(--border);border-radius:10px;}
-.config-item label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);}
-.config-item input[type="range"]{width:100%;accent-color:var(--gold);}
-.config-item .val{font-size:11px;font-weight:700;color:var(--gold-light);}
-.config-item .switch-mini{display:flex;align-items:center;justify-content:space-between;}
-.switch{position:relative;display:inline-block;width:42px;height:22px;}
+/* TOGGLE MODO CONTÍNUO */
+.continuous-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:var(--radius);background:var(--bg-3);border:1px solid var(--border);}
+.continuous-info{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-soft);}
+.continuous-info strong{color:#fff;font-size:13px;display:block;margin-bottom:2px;}
+.continuous-info small{color:var(--text-muted);font-size:11px;}
+.switch{position:relative;display:inline-block;width:50px;height:26px;flex-shrink:0;}
 .switch input{opacity:0;width:0;height:0;}
-.slider{position:absolute;cursor:pointer;inset:0;background:var(--bg-0);border:1px solid var(--border);border-radius:22px;transition:.25s;}
-.slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;top:2px;background:var(--text-muted);border-radius:50%;transition:.25s;}
-.switch input:checked + .slider{background:var(--green);border-color:var(--green);}
-.switch input:checked + .slider:before{transform:translateX(20px);background:#fff;}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--bg-0);border:1px solid var(--border);border-radius:26px;transition:.25s;}
+.slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:2.5px;background:var(--text-muted);border-radius:50%;transition:.25s;}
+.switch input:checked + .slider{background:linear-gradient(135deg,var(--green),var(--green-dark));border-color:var(--green);}
+.switch input:checked + .slider:before{transform:translateX(24px);background:#fff;}
 
-/* Form */
-.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:720px){.input-grid{grid-template-columns:1fr;}}
-.form-group{display:flex;flex-direction:column;gap:5px;}
-.form-group label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-soft);}
-.form-input{width:100%;padding:12px 14px;background:var(--bg-3);border:1px solid var(--border);
-  border-radius:10px;color:var(--text);font-size:13px;outline:none;transition:.2s;}
-.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,.18);}
-.form-input::placeholder{color:var(--text-muted);}
+/* CÂMERA */
+.camera-hero{position:relative;display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(59,130,246,.14),rgba(168,85,247,.10));border:1px dashed rgba(96,165,250,.45);transition:var(--transition);cursor:pointer;}
+.camera-hero:hover{border-color:var(--blue);background:linear-gradient(135deg,rgba(59,130,246,.22),rgba(168,85,247,.16));transform:translateY(-2px);}
+.camera-hero.disabled{opacity:.5;pointer-events:none;}
+.camera-hero.continuous{border-style:solid;border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.15),0 0 20px rgba(34,197,94,.25);}
+.camera-hero.continuous::after{content:"● REC CONTÍNUO";position:absolute;top:-8px;right:12px;background:var(--green);color:#0b1224;font-size:9px;font-weight:800;padding:3px 8px;border-radius:10px;letter-spacing:1px;animation:pulse 1.6s infinite;}
+.camera-icon-circle{width:52px;height:52px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--purple));display:grid;place-items:center;color:#fff;box-shadow:0 8px 20px rgba(59,130,246,.35);}
+.camera-hero-text{flex:1;display:flex;flex-direction:column;gap:2px;}
+.camera-hero-text strong{color:#fff;font-size:14px;}
+.camera-hero-text span{color:var(--text-muted);font-size:12px;}
+.camera-hero-arrow{color:var(--text-soft);}
 
-.movement-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.mov-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;
-  border-radius:10px;background:var(--bg-3);border:2px solid var(--border);
-  color:var(--text-soft);font-weight:700;font-size:12px;transition:.2s;}
-.mov-btn.entrada.active{background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(34,197,94,.05));
-  border-color:var(--green);color:#86efac;}
-.mov-btn.saida.active{background:linear-gradient(135deg,rgba(244,63,94,.22),rgba(244,63,94,.05));
-  border-color:var(--red);color:#fda4af;}
+/* PROGRESSO IA */
+.ai-progress{display:none;padding:12px 16px;background:var(--bg-3);border-radius:var(--radius);border:1px solid var(--border);}
+.ai-progress.show{display:block;}
+.ai-progress-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);font-weight:600;margin-bottom:8px;}
+.ai-progress-track{height:6px;border-radius:20px;background:var(--bg-0);overflow:hidden;}
+.ai-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--gold));transition:width .35s ease;border-radius:20px;}
 
-.vehicle-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-@media(max-width:600px){.vehicle-selector{grid-template-columns:repeat(2,1fr);}}
-.veh-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:14px 8px;border-radius:10px;background:var(--bg-3);border:2px solid var(--border);
-  color:var(--text-soft);font-weight:600;font-size:11px;transition:.2s;}
-.veh-btn.active{background:linear-gradient(160deg,rgba(245,166,35,.20),rgba(245,166,35,.04));
-  border-color:var(--gold);color:var(--gold-light);}
-.veh-btn.pedestre.active{background:linear-gradient(160deg,rgba(34,211,238,.20),rgba(34,211,238,.04));
-  border-color:var(--cyan);color:#67e8f9;}
-.veh-btn .auto-badge{position:absolute;top:5px;right:5px;background:var(--green);color:#0b1224;
-  font-size:8px;font-weight:800;padding:2px 6px;border-radius:10px;}
+/* PREVIEW FOTO */
+.photo-preview-box{display:none;align-items:center;gap:14px;padding:12px;border-radius:var(--radius);background:var(--bg-3);border:1px solid var(--border);}
+.photo-preview-box.show{display:flex;}
+.photo-preview-img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--border);}
 
-.plate-box{background:var(--bg-3);border:1px solid var(--border);border-radius:14px;padding:14px;max-width:400px;margin:0 auto;}
-.mercosul-plate{background:#fff;border-radius:10px;overflow:hidden;border:3px solid #0b1224;}
+/* PLACA */
+.plate-card-wrapper{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.plate-box{width:100%;max-width:380px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:12px;}
+.mercosul-plate{background:#fff;border-radius:10px;overflow:hidden;border:3px solid #0b1224;box-shadow:0 8px 24px rgba(0,0,0,.5);}
 .mercosul-plate.cinza{background:#e5e7eb;}
-.mercosul-header{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#009B3A;color:#fff;font-size:9px;font-weight:800;letter-spacing:1px;}
+.mercosul-header{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#009B3A;color:#fff;}
 .mercosul-plate.cinza .mercosul-header{background:#334155;}
-.plate-input{width:100%;border:none;outline:none;background:transparent;
-  font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;letter-spacing:6px;
-  text-align:center;color:#0b1224;text-transform:uppercase;padding:8px 0;}
+.mercosul-header-flags{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:800;letter-spacing:1px;}
+.plate-input-area{padding:8px 10px;}
+.plate-input{width:100%;border:none;outline:none;background:transparent;font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;color:#0b1224;text-transform:uppercase;padding:6px 0;}
 .plate-input::placeholder{color:#94a3b8;letter-spacing:4px;}
+.plate-style-switch{display:flex;gap:8px;justify-content:center;}
+.plate-toggle-btn{padding:6px 14px;border-radius:20px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-soft);font-size:11px;font-weight:700;transition:var(--transition);}
+.plate-toggle-btn.active{background:var(--gold);color:#0b1224;border-color:var(--gold);}
 
-.form-actions{display:grid;grid-template-columns:2fr 1fr;gap:10px;}
-@media(max-width:600px){.form-actions{grid-template-columns:1fr;}}
-.btn-save{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;
-  border:none;border-radius:12px;font-weight:800;font-size:12px;letter-spacing:.5px;transition:.2s;}
-.btn-save-record{background:linear-gradient(135deg,var(--green),#15803d);color:#fff;}
-.btn-save-ticket{background:linear-gradient(135deg,var(--gold),#b97614);color:#0b1224;}
-.btn-save:hover{transform:translateY(-2px);}
+/* FORM */
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:720px){.input-grid{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-soft);}
+.label-hint{font-size:10px;color:var(--gold-light);font-weight:600;text-transform:none;letter-spacing:0;}
+.input-with-icon{position:relative;display:flex;align-items:center;}
+.input-with-icon > svg{position:absolute;left:12px;color:var(--text-muted);pointer-events:none;}
+.input-with-icon .form-input{padding-left:40px;}
+.form-input{width:100%;padding:12px 14px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;transition:var(--transition);outline:none;}
+.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,.18);background:var(--bg-2);}
+.form-input::placeholder{color:var(--text-muted);}
+.cpf-status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.cpf-status-badge.ok{background:rgba(34,197,94,.18);color:#86efac;}
+.cpf-status-badge.err{background:rgba(244,63,94,.18);color:#fda4af;}
+.chips-wrapper{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chip-btn{padding:6px 12px;border-radius:20px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-soft);font-size:11px;font-weight:600;transition:var(--transition);}
+.chip-btn:hover{background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.4);color:var(--gold-light);}
 
-/* Tabelas */
-.spreadsheet-wrapper{overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--bg-1);}
-.spreadsheet{width:100%;border-collapse:collapse;font-size:12px;min-width:800px;}
-.spreadsheet th{text-align:left;padding:11px 10px;font-size:10px;font-weight:800;
-  text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);
-  border-bottom:1px solid var(--border);background:var(--bg-3);}
-.spreadsheet td{padding:10px;border-bottom:1px solid #1a2540;color:var(--text-soft);vertical-align:middle;}
+.form-actions-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+@media(max-width:720px){.form-actions-grid{grid-template-columns:1fr;}}
+.btn-save-record,.btn-save-and-ticket{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border-radius:var(--radius);border:none;font-weight:800;font-size:13px;letter-spacing:.6px;transition:var(--transition);}
+.btn-save-record{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;box-shadow:0 10px 24px rgba(34,197,94,.30);}
+.btn-save-record:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(34,197,94,.42);}
+.btn-save-and-ticket{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0b1224;box-shadow:0 10px 24px rgba(245,166,35,.30);}
+.btn-save-and-ticket:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(245,166,35,.42);}
+
+/* TABELA */
+.table-controls{display:flex;flex-direction:column;gap:12px;}
+.filter-group{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.select-filter{padding:12px 14px;border-radius:var(--radius-sm);background:var(--bg-3);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:600;outline:none;}
+.select-filter:focus{border-color:var(--gold);}
+.action-buttons-bar{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-action{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-3);color:var(--text-soft);font-weight:700;font-size:12px;transition:var(--transition);}
+.btn-action:hover{transform:translateY(-1px);color:#fff;}
+.btn-print:hover{border-color:var(--purple);color:#c4b5fd;background:rgba(168,85,247,.14);}
+.btn-export-excel:hover{border-color:var(--green);color:#86efac;background:rgba(34,197,94,.14);}
+.spreadsheet-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-1);}
+.spreadsheet{width:100%;border-collapse:collapse;font-size:12px;min-width:900px;}
+.spreadsheet thead{background:var(--bg-3);}
+.spreadsheet th{text-align:left;padding:12px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+.spreadsheet td{padding:10px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:middle;}
 .spreadsheet tbody tr:hover{background:rgba(245,166,35,.04);}
-.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;}
+.spreadsheet tbody tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px;}
 .badge.tipo-Carro{background:rgba(245,166,35,.18);color:#fcd34d;}
 .badge.tipo-Moto{background:rgba(168,85,247,.18);color:#d8b4fe;}
 .badge.tipo-Caminhão{background:rgba(59,130,246,.18);color:#93c5fd;}
 .badge.tipo-Pedestre{background:rgba(34,211,238,.18);color:#67e8f9;}
 .badge.mov-Entrada{background:rgba(34,197,94,.18);color:#86efac;}
 .badge.mov-Saída{background:rgba(244,63,94,.18);color:#fda4af;}
-.row-plate{font-family:'JetBrains Mono',monospace;font-weight:800;color:#fff;letter-spacing:1px;}
+.row-plate{font-family:'JetBrains Mono',monospace;font-weight:800;color:#fff;letter-spacing:1px;font-size:13px;}
 .row-name{color:#fff;font-weight:600;}
-.empty-row td{text-align:center;padding:30px 10px;color:var(--text-muted);font-style:italic;}
+.thumb{width:42px;height:42px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;}
+.thumb-empty{width:42px;height:42px;border-radius:8px;display:grid;place-items:center;background:var(--bg-3);border:1px dashed var(--border);color:var(--text-muted);font-size:10px;}
 .row-actions{display:flex;gap:6px;justify-content:center;}
-.icon-btn{width:30px;height:30px;border-radius:6px;background:var(--bg-2);
-  border:1px solid var(--border);color:var(--text-soft);display:grid;place-items:center;transition:.2s;}
-.icon-btn:hover{color:var(--gold-light);border-color:rgba(245,166,35,.45);}
-.icon-btn.danger:hover{color:#fda4af;border-color:rgba(244,63,94,.5);}
+.row-actions .icon-btn{width:30px;height:30px;border-radius:6px;}
+.row-actions .danger:hover{color:#fda4af;border-color:rgba(244,63,94,.5);}
+.empty-row td{text-align:center;padding:40px 10px;color:var(--text-muted);font-style:italic;}
 
-.tab-navigation{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--border);
-  border-radius:14px;padding:6px;flex-wrap:wrap;}
-.tab-btn{flex:1;min-width:160px;display:flex;align-items:center;justify-content:center;gap:8px;
-  padding:11px 14px;border-radius:10px;background:transparent;border:1px solid transparent;
-  color:var(--text-soft);font-weight:600;font-size:12px;transition:.2s;}
-.tab-btn.active{background:linear-gradient(135deg,rgba(245,166,35,.18),rgba(245,166,35,.05));
-  color:var(--gold-light);border-color:rgba(245,166,35,.35);}
-.tab-count-badge{background:var(--gold);color:#0b1224;font-size:10px;font-weight:800;
-  padding:2px 7px;border-radius:20px;}
-
-/* Stats */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
-.stat-card{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--bg-2),var(--bg-1));
-  border:1px solid var(--border);border-radius:14px;padding:14px;transition:.2s;}
-.stat-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
-.stat-card.patio{--accent:var(--gold-light);}
-.stat-card.pedestres{--accent:var(--cyan);}
-.stat-card.entradas{--accent:var(--green);}
-.stat-card.saidas{--accent:var(--red);}
-.stat-card.total{--accent:var(--purple);}
-.stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;}
-.stat-value{font-size:28px;font-weight:800;color:#fff;line-height:1;margin:6px 0;font-variant-numeric:tabular-nums;}
-
-/* Toast */
-#toastWrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
-.toast{min-width:230px;max-width:360px;padding:12px 16px;border-radius:10px;
-  background:var(--bg-2);border:1px solid var(--border);color:var(--text);
-  font-size:12px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.55);
-  animation:slideIn .3s;pointer-events:auto;border-left:4px solid var(--gold);}
+/* TOAST */
+#toastWrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{min-width:240px;max-width:380px;padding:14px 18px;border-radius:12px;background:var(--bg-2);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.55);animation:slideIn .3s ease;pointer-events:auto;border-left:4px solid var(--gold);}
 .toast.success{border-left-color:var(--green);}
 .toast.error{border-left-color:var(--red);}
 .toast.info{border-left-color:var(--cyan);}
 @keyframes slideIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
-/* Modal */
-.modal-overlay{display:none;position:fixed;inset:0;z-index:9998;
-  background:rgba(3,7,18,.75);backdrop-filter:blur(4px);place-items:center;padding:20px;}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:9998;background:rgba(3,7,18,.75);backdrop-filter:blur(4px);place-items:center;padding:20px;}
 .modal-overlay.show{display:grid;}
-.modal-box{width:100%;max-width:440px;background:linear-gradient(180deg,var(--bg-2),var(--bg-1));
-  border:1px solid var(--border);border-radius:16px;padding:22px;
-  display:flex;flex-direction:column;gap:14px;}
-.modal-box h3{margin:0;color:#fff;font-size:15px;}
+.modal-box{width:100%;max-width:460px;background:linear-gradient(180deg,var(--bg-2),var(--bg-1));border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px;}
+.modal-box h3{margin:0;color:#fff;font-size:16px;}
 .modal-box p{margin:0;font-size:12px;color:var(--text-muted);line-height:1.5;}
 
-/* Aviso HTTPS */
-.https-warning{display:none;padding:14px 16px;border-radius:12px;
-  background:linear-gradient(135deg,rgba(244,63,94,.15),rgba(244,63,94,.04));
-  border:1px solid rgba(244,63,94,.35);font-size:12px;color:#fda4af;line-height:1.5;}
-.https-warning.show{display:block;}
-.https-warning strong{color:#fff;}
+/* MODAL CONFIRMAÇÃO PLACA */
+#plateConfirmModal .modal-box{border-color:rgba(245,166,35,.45);box-shadow:0 0 0 1px rgba(245,166,35,.15),0 20px 50px rgba(0,0,0,.6);}
+.confirm-header{display:flex;align-items:center;gap:12px;}
+.confirm-icon{width:44px;height:44px;border-radius:12px;background:rgba(245,166,35,.18);color:var(--gold-light);display:grid;place-items:center;flex-shrink:0;}
+.confirm-confidence{display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--bg-3);border-radius:var(--radius);border:1px solid var(--border);}
+.confidence-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);}
+.confidence-bar-track{height:6px;background:var(--bg-0);border-radius:20px;overflow:hidden;}
+.confidence-bar-fill{height:100%;border-radius:20px;transition:width .4s ease;}
+.confidence-bar-fill.high{background:linear-gradient(90deg,var(--green),#4ade80);}
+.confidence-bar-fill.medium{background:linear-gradient(90deg,var(--gold),var(--gold-light));}
+.confidence-bar-fill.low{background:linear-gradient(90deg,var(--red),#fb7185);}
+.confirm-plate-edit{display:flex;flex-direction:column;gap:6px;}
+.confirm-plate-edit label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-soft);}
+.confirm-plate-input{width:100%;padding:16px;background:var(--bg-3);border:2px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;letter-spacing:8px;text-align:center;color:#fff;text-transform:uppercase;outline:none;transition:var(--transition);}
+.confirm-plate-input:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(245,166,35,.2);}
+.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.confirm-actions button{padding:14px;border-radius:var(--radius);border:none;font-weight:800;font-size:13px;transition:var(--transition);}
+.btn-confirm-yes{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;}
+.btn-confirm-yes:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(34,197,94,.35);}
+.btn-confirm-no{background:var(--bg-3);color:var(--text-soft);border:1px solid var(--border)!important;}
+.btn-confirm-no:hover{background:var(--bg-2);color:#fff;}
 </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- HEADER -->
   <div class="header-top">
     <div class="brand">
       <div class="brand-logo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
       <div class="brand-text">
         <h1>Portaria Inteligente</h1>
-        <p>Câmera ao Vivo • IA</p>
+        <p>Controle de Acesso com IA</p>
       </div>
     </div>
     <div class="header-right">
@@ -277,84 +277,118 @@ input,select{font-family:inherit;}
         <div class="clock-display" id="clockTime">--:--:--</div>
         <div class="date-display" id="clockDate">Hoje</div>
       </div>
-      <button class="icon-btn" onclick="openBackupModal()" title="Backup" style="width:38px;height:38px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-      </button>
+      <div class="header-tools">
+        <button type="button" class="icon-btn" id="btnAudioToggle" onclick="toggleAudio()" title="Sons" aria-label="Ativar ou desativar sons">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+        <button type="button" class="icon-btn" onclick="openBackupModal()" title="Backup" aria-label="Backup">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- STATS -->
   <div class="stats-grid">
-    <div class="stat-card patio"><div class="stat-label">Veículos no Pátio</div><div class="stat-value" id="statPatio">0</div></div>
-    <div class="stat-card pedestres"><div class="stat-label">Pedestres</div><div class="stat-value" id="statPedestres">0</div></div>
-    <div class="stat-card entradas"><div class="stat-label">Entradas Hoje</div><div class="stat-value" id="statEntradas">0</div></div>
-    <div class="stat-card saidas"><div class="stat-label">Saídas Hoje</div><div class="stat-value" id="statSaidas">0</div></div>
-    <div class="stat-card total"><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
+    <div class="stat-card patio"><div class="stat-top"><span class="stat-label">Veículos no Pátio</span><div class="stat-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M9 16V8h4a2 2 0 0 1 0 4H9"/></svg></div></div><div class="stat-value" id="statPatio">0</div><div class="stat-desc">Estacionamento ativo</div></div>
+    <div class="stat-card pedestres"><div class="stat-top"><span class="stat-label">Pedestres no Local</span><div class="stat-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div></div><div class="stat-value" id="statPedestres">0</div><div class="stat-desc">Visitantes e serviços</div></div>
+    <div class="stat-card entradas"><div class="stat-top"><span class="stat-label">Entradas Hoje</span><div class="stat-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div></div><div class="stat-value" id="statEntradas">0</div><div class="stat-desc">Acessos autorizados</div></div>
+    <div class="stat-card saidas"><div class="stat-top"><span class="stat-label">Saídas Hoje</span><div class="stat-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div></div><div class="stat-value" id="statSaidas">0</div><div class="stat-desc">Finalizados hoje</div></div>
+    <div class="stat-card total"><div class="stat-top"><span class="stat-label">Total Registros</span><div class="stat-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div></div><div class="stat-value" id="statTotal">0</div><div class="stat-desc">Base de dados ativa</div></div>
   </div>
 
-  <!-- TABS -->
-  <div class="tab-navigation">
-    <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      Novo Registro
+  <div class="tab-navigation" role="tablist">
+    <button type="button" class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')" role="tab" aria-selected="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>Novo Registro</span>
     </button>
-    <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Planilha
+    <button type="button" class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')" role="tab" aria-selected="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Planilha & Histórico</span>
     </button>
-    <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      Presentes <span class="tab-count-badge" id="tabCountPresentes">0</span>
+    <button type="button" class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')" role="tab" aria-selected="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Presentes <span class="tab-count-badge" id="tabCountPresentes">0</span></span>
     </button>
   </div>
 
-  <!-- TAB REGISTRO -->
   <div id="tabContentRegistro">
+    <div class="vip-card">
 
-    <!-- AVISO HTTPS -->
-    <div class="https-warning" id="httpsWarning" style="margin-bottom:16px;">
-      <strong>⚠️ Câmera bloqueada:</strong> o navegador só permite câmera ao vivo em <strong>HTTPS</strong> ou <strong>localhost</strong>.
-      Abra este arquivo por um servidor local ou publique em HTTPS para usar a câmera ao vivo.
-      Você ainda pode <strong>enviar foto</strong> do rolo do celular.
-    </div>
+      <div class="section-header"><div class="section-number">01</div><div class="section-title-text">Tipo de Movimentação</div></div>
+      <div class="movement-selector">
+        <button type="button" class="mov-btn entrada active" id="btnEntrada" onclick="setMovement('Entrada')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>ENTRADA AUTORIZADA</span>
+        </button>
+        <button type="button" class="mov-btn saida" id="btnSaida" onclick="setMovement('Saída')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>SAÍDA REGISTRADA</span>
+        </button>
+      </div>
 
-    <!-- ===== CÂMERA AO VIVO ===== -->
-    <div class="live-camera-section">
-      <div class="live-camera-header">
-        <div class="live-badge">
-          <span class="live-dot" id="liveDot" style="display:none;"></span>
-          <span id="liveBadgeText">CÂMERA AO VIVO DESATIVADA</span>
+      <div class="section-header"><div class="section-number">02</div><div class="section-title-text">Categoria de Acesso</div></div>
+      <div class="vehicle-selector" id="vehicleSelector">
+        <button type="button" class="veh-btn active" data-type="Carro" onclick="setAccessType('Carro')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+          <span>Automóvel / Carro</span>
+        </button>
+        <button type="button" class="veh-btn" data-type="Moto" onclick="setAccessType('Moto')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+          <span>Motocicleta</span>
+        </button>
+        <button type="button" class="veh-btn" data-type="Caminhão" onclick="setAccessType('Caminhão')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span>Caminhão / Carga</span>
+        </button>
+        <button type="button" class="veh-btn pedestre" data-type="Pedestre" onclick="setAccessType('Pedestre')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/></svg>
+          <span>Pedestre / A pé</span>
+        </button>
+      </div>
+
+      <div class="pedestrian-notice" id="pedestrianNotice">
+        <div class="pedestrian-notice-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);">
-          Detecta carro/moto/caminhão e lê a placa automaticamente
+        <div>
+          <strong style="color:var(--cyan);font-size:14px;">Modo de Controle de Pedestre Ativo</strong>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Placa não necessária. Cadastre o <strong>Nome Completo</strong> e o <strong>CPF</strong> para autorização.</p>
         </div>
       </div>
 
-      <div class="camera-stage" id="cameraStage" style="display:none;">
-        <video id="liveVideo" autoplay playsinline muted></video>
-        <div class="scan-overlay">
-          <div class="scan-frame"></div>
-          <div class="scan-line"></div>
+      <div class="section-header"><div class="section-number">03</div><div class="section-title-text">Captura & Reconhecimento por IA</div></div>
+
+      <!-- MODO CONTÍNUO -->
+      <div class="continuous-bar" id="continuousBar">
+        <div class="continuous-info">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <div>
+            <strong>Modo Contínuo</strong>
+            <small id="continuousHint">Câmera reabre automaticamente após cada registro</small>
+          </div>
         </div>
-        <div id="detectBoxContainer" style="position:absolute;inset:0;pointer-events:none;"></div>
-        <div class="camera-status">
-          <div class="camera-status-text" id="cameraStatusText">Aguardando veículo...</div>
-          <div class="camera-fps" id="cameraFps">-- fps</div>
+        <label class="switch" title="Ativar/desativar modo contínuo">
+          <input type="checkbox" id="continuousToggle" onchange="toggleContinuousMode(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleNativeImage(this)">
+
+      <div class="camera-hero" id="cameraHero" onclick="triggerCamera()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();triggerCamera();}">
+        <div class="camera-icon-circle">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="camera-hero-text">
+          <strong id="cameraHeroTitle">Fotografar Placa / Documento</strong>
+          <span id="cameraHeroSub">IA ativa: identifica o veículo e lê a placa automaticamente</span>
+        </div>
+        <div class="camera-hero-arrow">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>
 
-      <div id="cameraPlaceholder" style="text-align:center;padding:36px 20px;border:2px dashed var(--border);border-radius:14px;background:var(--bg-3);">
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" style="margin:0 auto 10px;display:block;">
-          <path d="M23 7l-7 5 7 5V7z"/>
-          <rect x="1" y="5" width="15" height="14" rx="2"/>
-        </svg>
-        <div style="color:#fff;font-weight:700;font-size:14px;margin-bottom:4px;">Câmera ao Vivo com IA</div>
-        <div style="font-size:12px;color:var(--text-muted);max-width:400px;margin:0 auto;">
-          Clique em <strong>Iniciar Câmera</strong>. Aponte para o veículo e aguarde — a placa será preenchida automaticamente.
-        </div>
-      </div>
-
-      <div class="ai-progress" id="aiProgress" style="display:none;">
+      <div class="ai-progress" id="aiProgress">
         <div class="ai-progress-row">
           <span id="aiProgressLabel">Processando...</span>
           <span id="aiProgressPct">0%</span>
@@ -362,158 +396,143 @@ input,select{font-family:inherit;}
         <div class="ai-progress-track"><div class="ai-progress-fill" id="aiProgressFill"></div></div>
       </div>
 
-      <div class="live-controls">
-        <button class="btn-live start" id="btnStartLive" onclick="startLiveCamera()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Iniciar Câmera
-        </button>
-        <button class="btn-live stop" id="btnStopLive" onclick="stopLiveCamera()" disabled>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12"/></svg>
-          Parar Câmera
+      <div class="photo-preview-box" id="photoPreviewBox">
+        <img src="" id="photoPreviewImg" class="photo-preview-img" alt="Captura">
+        <div style="flex:1;">
+          <strong style="font-size:13px;color:#fff;" id="photoStatusTitle">Foto Anexada</strong>
+          <div id="photoStatusText" style="font-size:12px;color:var(--text-muted);margin-top:2px;">Aguardando processamento...</div>
+        </div>
+        <button type="button" onclick="removeAttachedPhoto()" class="icon-btn" style="border-color:rgba(244,63,94,0.4);color:#fb7185;" title="Remover Foto" aria-label="Remover foto">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <!-- Configurações da câmera ao vivo -->
-      <div class="config-row" style="margin-top:14px;">
-        <div class="config-item">
-          <label>Intervalo de leitura</label>
-          <input type="range" id="cfgInterval" min="800" max="4000" step="200" value="1500" oninput="document.getElementById('cfgIntervalVal').textContent = this.value + 'ms'">
-          <div class="val" id="cfgIntervalVal">1500ms</div>
-        </div>
-        <div class="config-item">
-          <label>Confiança mínima</label>
-          <input type="range" id="cfgMinConf" min="50" max="95" step="5" value="70" oninput="document.getElementById('cfgMinConfVal').textContent = this.value + '%'">
-          <div class="val" id="cfgMinConfVal">70%</div>
-        </div>
-        <div class="config-item">
-          <label>Preenchimento automático</label>
-          <div class="switch-mini">
-            <span style="font-size:11px;color:var(--text-soft);">Preencher sozinho</span>
-            <label class="switch"><input type="checkbox" id="cfgAutoFill" checked><span class="slider"></span></label>
-          </div>
-        </div>
-        <div class="config-item">
-          <label>Confirmar antes de usar</label>
-          <div class="switch-mini">
-            <span style="font-size:11px;color:var(--text-soft);">Mostrar modal</span>
-            <label class="switch"><input type="checkbox" id="cfgConfirmBefore" checked><span class="slider"></span></label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- DADOS DO REGISTRO -->
-    <div class="vip-card" style="margin-top:16px;">
-      <div class="section-header"><div class="section-number">01</div><div class="section-title-text">Tipo de Movimentação</div></div>
-      <div class="movement-selector">
-        <button class="mov-btn entrada active" id="btnEntrada" onclick="setMovement('Entrada')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-          ENTRADA
-        </button>
-        <button class="mov-btn saida" id="btnSaida" onclick="setMovement('Saída')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          SAÍDA
-        </button>
-      </div>
-
-      <div class="section-header"><div class="section-number">02</div><div class="section-title-text">Categoria de Acesso</div></div>
-      <div class="vehicle-selector">
-        <button class="veh-btn active" data-type="Carro" onclick="setAccessType('Carro')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-          Carro
-        </button>
-        <button class="veh-btn" data-type="Moto" onclick="setAccessType('Moto')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-          Moto
-        </button>
-        <button class="veh-btn" data-type="Caminhão" onclick="setAccessType('Caminhão')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          Caminhão
-        </button>
-        <button class="veh-btn pedestre" data-type="Pedestre" onclick="setAccessType('Pedestre')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/></svg>
-          Pedestre
-        </button>
-      </div>
-
-      <div class="section-header"><div class="section-number">03</div><div class="section-title-text">Identificação & Destino</div></div>
-
-      <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="plate-card-wrapper" id="plateCardWrapper">
         <div class="plate-box">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Placa</div>
           <div class="mercosul-plate" id="plateDisplayBox">
-            <div class="mercosul-header">
-              <span>🇧🇷 BRASIL</span>
-              <span>MERCOSUL</span>
+            <div class="mercosul-header" id="plateDisplayHeader">
+              <div class="mercosul-header-flags" id="plateFlagsWrap">
+                <svg width="16" height="11" viewBox="0 0 20 14" fill="none"><rect width="20" height="14" fill="#009B3A"/><polygon points="10,1.5 18.5,7 10,12.5 1.5,7" fill="#FEDF00"/><circle cx="10" cy="7" r="3.2" fill="#002776"/></svg>
+                <span id="plateHeaderCountry">BRASIL</span>
+              </div>
+              <span id="plateHeaderSub" style="font-size:8px;opacity:.9;letter-spacing:1px;">MERCOSUL</span>
             </div>
-            <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="7" oninput="formatPlateInput(this)" autocomplete="off" spellcheck="false">
+            <div class="plate-input-area">
+              <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="7" oninput="formatPlateInput(this)" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Placa do veículo">
+            </div>
           </div>
-          <div id="ocrStatus" style="font-size:11px;color:var(--text-muted);font-weight:600;text-align:center;margin-top:10px;">
-            Aguardando leitura automática ou digite a placa
+          <div class="plate-style-switch">
+            <button type="button" class="plate-toggle-btn active" id="btnPlateMercosul" onclick="setPlateStyle('mercosul')">Mercosul</button>
+            <button type="button" class="plate-toggle-btn" id="btnPlateCinza" onclick="setPlateStyle('cinza')">Padrão Cinza</button>
+          </div>
+          <div id="ocrStatus" style="font-size:12px;color:var(--text-muted);font-weight:600;text-align:center;">Capture a foto para leitura automática por IA ou digite a placa acima</div>
+        </div>
+      </div>
+
+      <div class="section-header"><div class="section-number">04</div><div class="section-title-text">Identificação & Destino</div></div>
+
+      <div class="input-grid">
+        <div class="form-group">
+          <label id="labelPersonName"><span>Nome do Condutor / Motorista</span><span class="label-hint">Obrigatório</span></label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="inputPersonName" class="form-input" placeholder="Ex: Roberto Carlos Pereira" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span>CPF (Documento)</span><span id="cpfValidationBadge" class="cpf-status-badge" aria-live="polite"></span></label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="11" y2="12"/><line x1="7" y1="16" x2="14" y2="16"/></svg>
+            <input type="text" id="inputCpf" class="form-input" placeholder="000.000.000-00" maxlength="14" oninput="handleCpfInput(this)" inputmode="numeric" autocomplete="off">
           </div>
         </div>
       </div>
 
       <div class="input-grid">
         <div class="form-group">
-          <label>Nome / Condutor</label>
-          <input type="text" id="inputPersonName" class="form-input" placeholder="Ex: Roberto Carlos Pereira" autocomplete="off">
+          <label>Destino / Apto / Bloco / Unidade</label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 302 - Bloco B" autocomplete="off">
+          </div>
+          <div class="chips-wrapper">
+            <button type="button" class="chip-btn" onclick="fillDestination('Bloco A')">🏢 Bloco A</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Bloco B')">🏢 Bloco B</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('iFood / Delivery')">🍔 Delivery</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Mercado Livre')">📦 Entrega</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Prestador de Serviço')">🔧 Prestador</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Administração')">💼 Adm</button>
+          </div>
         </div>
         <div class="form-group">
-          <label>CPF</label>
-          <input type="text" id="inputCpf" class="form-input" placeholder="000.000.000-00" maxlength="14" oninput="handleCpfInput(this)" inputmode="numeric">
+          <label>Observações / Crachá / Carga</label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <input type="text" id="inputNotes" class="form-input" placeholder="Ex: Crachá #42 / Autorizado pelo morador" autocomplete="off">
+          </div>
         </div>
       </div>
 
-      <div class="input-grid">
-        <div class="form-group">
-          <label>Destino / Bloco / Apto</label>
-          <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 302 - Bloco B" autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label>Observações</label>
-          <input type="text" id="inputNotes" class="form-input" placeholder="Crachá, autorização..." autocomplete="off">
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button class="btn-save btn-save-record" onclick="saveRecord(false)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-          REGISTRAR
+      <div class="form-actions-grid">
+        <button type="button" class="btn-save-record" onclick="saveRecord(false)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>REGISTRAR E SALVAR NA PLANILHA</span>
         </button>
-        <button class="btn-save btn-save-ticket" onclick="saveRecord(true)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-          + Ticket
+        <button type="button" class="btn-save-and-ticket" onclick="saveRecord(true)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+          <span>Salvar & Emitir Ticket</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- TAB PLANILHA -->
   <div id="tabContentPlanilha" style="display:none;">
     <div class="vip-card">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <input type="text" id="searchTable" class="form-input" placeholder="Buscar..." oninput="renderTable()" style="flex:2;min-width:200px;">
-        <select id="filterType" class="form-input" onchange="renderTable()" style="flex:1;min-width:130px;">
-          <option value="ALL">Todos tipos</option>
-          <option value="Carro">🚗 Carros</option>
-          <option value="Moto">🏍️ Motos</option>
-          <option value="Caminhão">🚚 Caminhões</option>
-          <option value="Pedestre">🚶 Pedestres</option>
-        </select>
-        <select id="filterMovement" class="form-input" onchange="renderTable()" style="flex:1;min-width:130px;">
-          <option value="ALL">Movimentos</option>
-          <option value="Entrada">🟢 Entradas</option>
-          <option value="Saída">🔴 Saídas</option>
-        </select>
-        <button class="btn-save btn-save-ticket" onclick="exportToCSV()" style="padding:12px 16px;font-size:11px;">📥 CSV</button>
+      <div class="table-controls">
+        <div class="filter-group">
+          <div class="input-with-icon" style="flex:2;min-width:240px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchTable" class="form-input" placeholder="Buscar por placa, nome, CPF, destino..." oninput="renderTable()" autocomplete="off">
+          </div>
+          <select id="filterType" class="select-filter" onchange="renderTable()">
+            <option value="ALL">Todos os Tipos</option>
+            <option value="Pedestre">🚶 Pedestres</option>
+            <option value="Carro">🚗 Automóveis</option>
+            <option value="Moto">🏍️ Motos</option>
+            <option value="Caminhão">🚚 Caminhões</option>
+          </select>
+          <select id="filterMovement" class="select-filter" onchange="renderTable()">
+            <option value="ALL">Todas Movimentações</option>
+            <option value="Entrada">🟢 Apenas Entradas</option>
+            <option value="Saída">🔴 Apenas Saídas</option>
+          </select>
+        </div>
+        <div class="action-buttons-bar">
+          <button class="btn-action btn-print" onclick="printSpreadsheet()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>Imprimir</span>
+          </button>
+          <button class="btn-action btn-export-excel" onclick="exportToCSV()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Exportar Excel / CSV</span>
+          </button>
+        </div>
       </div>
-      <div class="spreadsheet-wrapper" style="margin-top:14px;">
+
+      <div class="spreadsheet-wrapper">
         <table class="spreadsheet">
           <thead>
             <tr>
-              <th>Horário</th><th>Placa</th><th>Tipo</th><th>Movimento</th>
-              <th>Nome</th><th>CPF</th><th>Destino</th><th>Obs</th><th style="text-align:center;">Ações</th>
+              <th scope="col" style="width:110px;">Horário</th>
+              <th scope="col" style="width:55px;text-align:center;">Foto</th>
+              <th scope="col">Identificação / Placa</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Movimento</th>
+              <th scope="col">Nome / Condutor</th>
+              <th scope="col">CPF</th>
+              <th scope="col">Destino</th>
+              <th scope="col">Obs</th>
+              <th scope="col" style="text-align:center;width:140px;">Ações</th>
             </tr>
           </thead>
           <tbody id="spreadsheetBody"></tbody>
@@ -522,16 +541,29 @@ input,select{font-family:inherit;}
     </div>
   </div>
 
-  <!-- TAB PÁTIO -->
   <div id="tabContentPatio" style="display:none;">
     <div class="vip-card">
-      <div class="section-header"><div class="section-number">📍</div><div class="section-title-text">Permanência em Tempo Real</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:12px;">
+        <div class="section-header" style="margin-bottom:0;">
+          <div class="section-number">📍</div>
+          <div class="section-title-text">Controle de Permanência em Tempo Real</div>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);background:#0f1629;padding:6px 14px;border-radius:8px;border:1px solid var(--border);">
+          Presentes no momento: <strong id="totalPresentesBadge" style="color:var(--gold-light);">0</strong>
+        </div>
+      </div>
       <div class="spreadsheet-wrapper">
         <table class="spreadsheet">
           <thead>
             <tr>
-              <th>Entrada</th><th>Placa</th><th>Tipo</th><th>Nome</th>
-              <th>Destino</th><th>Permanência</th><th style="text-align:center;">Ação</th>
+              <th scope="col">Entrada</th>
+              <th scope="col">Identificação / Placa</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Nome / Pessoa</th>
+              <th scope="col">CPF</th>
+              <th scope="col">Destino</th>
+              <th scope="col">Permanência</th>
+              <th scope="col" style="text-align:center;width:150px;">Ação Imediata</th>
             </tr>
           </thead>
           <tbody id="patioBody"></tbody>
@@ -541,23 +573,38 @@ input,select{font-family:inherit;}
   </div>
 </div>
 
-<!-- MODAL CONFIRMAÇÃO -->
+<!-- MODAL CONFIRMAÇÃO PLACA -->
 <div class="modal-overlay" id="plateConfirmModal">
   <div class="modal-box">
-    <h3>🔍 Confirmar Placa Lida</h3>
-    <p id="confirmInfo">A câmera detectou um veículo e leu a placa. Confirme ou ajuste.</p>
-    <div style="padding:12px;background:var(--bg-3);border-radius:10px;border:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-bottom:6px;">
-        <span>Confiança</span><span id="confirmConfidence" style="color:var(--gold-light);font-weight:800;">—</span>
+    <div class="confirm-header">
+      <div class="confirm-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
-      <div style="height:5px;background:var(--bg-0);border-radius:20px;overflow:hidden;">
-        <div id="confirmBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--green),#4ade80);border-radius:20px;transition:.4s;"></div>
+      <div>
+        <h3 style="margin:0;font-size:15px;">Confirmar Placa</h3>
+        <p style="margin:2px 0 0;font-size:12px;color:var(--text-muted);" id="plateConfirmMessage">A IA leu a placa — confirme antes de continuar.</p>
       </div>
     </div>
-    <input type="text" id="confirmPlateInput" class="plate-input" style="background:var(--bg-3);border:2px solid var(--border);border-radius:10px;padding:14px;color:#fff;" maxlength="7" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7)">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button class="btn-save" style="background:var(--bg-3);color:var(--text-soft);border:1px solid var(--border);" onclick="cancelPlateConfirm()">Cancelar</button>
-      <button class="btn-save btn-save-record" onclick="acceptPlateConfirm()">✓ Confirmar</button>
+
+    <div class="confirm-confidence">
+      <div class="confidence-row">
+        <span>Confiança da leitura</span>
+        <span id="confidencePct" style="font-weight:800;color:#fff;">—</span>
+      </div>
+      <div class="confidence-bar-track">
+        <div class="confidence-bar-fill medium" id="confidenceBar" style="width:0%;"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);" id="confidenceDetail">Aguardando...</div>
+    </div>
+
+    <div class="confirm-plate-edit">
+      <label>Placa detectada (edite se necessário)</label>
+      <input type="text" id="confirmPlateInput" class="confirm-plate-input" maxlength="7" oninput="formatConfirmPlateInput(this)" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    </div>
+
+    <div class="confirm-actions">
+      <button class="btn-confirm-no" onclick="cancelPlateConfirm()">Corrigir manualmente</button>
+      <button class="btn-confirm-yes" onclick="acceptPlateConfirm()">✓ Confirmar e usar</button>
     </div>
   </div>
 </div>
@@ -565,13 +612,16 @@ input,select{font-family:inherit;}
 <!-- MODAL BACKUP -->
 <div class="modal-overlay" id="backupModal">
   <div class="modal-box">
-    <h3>💾 Backup & Dados</h3>
-    <button class="btn-save btn-save-record" onclick="exportBackupJSON()" style="width:100%;">💾 Baixar Backup JSON</button>
-    <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="handleRestoreFile(this)">
-    <button class="btn-save btn-save-ticket" onclick="document.getElementById('restoreFileInput').click()" style="width:100%;">📂 Restaurar Backup</button>
-    <button class="btn-save" onclick="seedDemoData()" style="width:100%;background:rgba(245,158,11,.15);color:var(--gold-light);border:1px solid rgba(245,158,11,.3);">✨ Dados Demo</button>
-    <button class="btn-save" onclick="clearAllData()" style="width:100%;background:rgba(244,63,94,.15);color:#fda4af;border:1px solid rgba(244,63,94,.3);">🗑️ Apagar Tudo</button>
-    <button class="btn-save" onclick="closeBackupModal()" style="width:100%;background:var(--bg-3);color:var(--text-soft);border:1px solid var(--border);">Fechar</button>
+    <h3>💾 Backup & Configurações</h3>
+    <p>Gerencie os dados do sistema. O backup inclui todos os registros do histórico e do pátio.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button class="btn-action btn-export-excel" onclick="exportBackupJSON()" style="justify-content:center;padding:14px;">💾 Fazer Download do Backup (JSON)</button>
+      <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="handleRestoreFile(this)">
+      <button class="btn-action btn-print" onclick="document.getElementById('restoreFileInput').click()" style="justify-content:center;padding:14px;">📂 Restaurar Backup de Arquivo</button>
+      <button class="btn-action" onclick="seedDemoData()" style="background:rgba(245,158,11,.15);color:var(--gold-light);border:1px solid rgba(245,158,11,.3);justify-content:center;padding:12px;">✨ Carregar Dados de Demonstração</button>
+      <button class="btn-action" onclick="clearAllData()" style="background:rgba(244,63,94,.15);color:#fda4af;border:1px solid rgba(244,63,94,.3);justify-content:center;padding:12px;">🗑️ Apagar Todos os Dados</button>
+      <button class="btn-action" onclick="closeBackupModal()" style="justify-content:center;padding:12px;">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -581,32 +631,20 @@ input,select{font-family:inherit;}
 /* =========================================================
    ESTADO
    ========================================================= */
-const STORAGE_KEY = 'portaria_v4';
+const STORAGE_KEY = 'portaria_registros_v3';
+const CONTINUOUS_KEY = 'portaria_modo_continuo';
 let records = [];
 let currentMovement = 'Entrada';
 let currentType = 'Carro';
+let attachedPhoto = null;
 let audioEnabled = true;
+let currentPlateStyle = 'mercosul';
+let continuousMode = false;
+let pendingPlateConfirm = null; // guarda resultado da leitura pendente
 
-/* Câmera ao vivo */
-let liveStream = null;
-let liveVideo = null;
-let liveCanvas = null;
-let liveCtx = null;
-let liveLoopRunning = false;
-let liveProcessing = false;
-let liveFrameCount = 0;
-let liveFpsTime = Date.now();
-let lastDetectionTime = 0;
-let lastReadPlate = null;
-let lastReadCount = 0;
-
-/* IA */
 let cocoModel = null;
 let tesseractWorker = null;
 let aiReady = false;
-
-/* Confirmação pendente */
-let pendingPlateConfirm = null;
 
 /* =========================================================
    UTILITÁRIOS
@@ -621,46 +659,62 @@ function toast(msg, kind='info'){
   setTimeout(()=>el.remove(),3000);
 }
 function escapeHtml(s){
-  return String(s||'').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s || '').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 let audioCtx = null;
 function beep(freq=880, dur=0.12){
   if(!audioEnabled) return;
   try{
     audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.frequency.value = freq; o.type='sine';
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.frequency.value = freq;
+    o.type = 'sine';
     o.connect(g); g.connect(audioCtx.destination);
     g.gain.setValueAtTime(0.15, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
     o.start(); o.stop(audioCtx.currentTime + dur);
   }catch(e){}
 }
+function toggleAudio(){
+  audioEnabled = !audioEnabled;
+  document.getElementById('btnAudioToggle').classList.toggle('off', !audioEnabled);
+  toast(audioEnabled ? '🔊 Sons ativados' : '🔇 Sons desativados','info');
+}
 
 /* =========================================================
    RELÓGIO
    ========================================================= */
 function updateClock(){
-  const n = new Date();
-  document.getElementById('clockTime').textContent =
-    String(n.getHours()).padStart(2,'0') + ':' +
-    String(n.getMinutes()).padStart(2,'0') + ':' +
-    String(n.getSeconds()).padStart(2,'0');
-  document.getElementById('clockDate').textContent =
-    n.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 }
-setInterval(updateClock,1000); updateClock();
+setInterval(updateClock,1000);
+updateClock();
 
 /* =========================================================
    ABAS
    ========================================================= */
 function switchTab(tab){
-  const map = {registro:'tabContentRegistro', planilha:'tabContentPlanilha', patio:'tabContentPatio'};
-  const btns = {registro:'tabBtnRegistro', planilha:'tabBtnPlanilha', patio:'tabBtnPatio'};
-  Object.keys(map).forEach(k=>{
-    document.getElementById(map[k]).style.display = k === tab ? '' : 'none';
-    document.getElementById(btns[k]).classList.toggle('active', k === tab);
+  const map = {
+    registro: {content:'tabContentRegistro', btn:'tabBtnRegistro'},
+    planilha: {content:'tabContentPlanilha', btn:'tabBtnPlanilha'},
+    patio:    {content:'tabContentPatio',    btn:'tabBtnPatio'}
+  };
+  Object.values(map).forEach(v=>{
+    document.getElementById(v.content).style.display = 'none';
+    const b = document.getElementById(v.btn);
+    b.classList.remove('active');
+    b.setAttribute('aria-selected','false');
   });
+  document.getElementById(map[tab].content).style.display = '';
+  const activeBtn = document.getElementById(map[tab].btn);
+  activeBtn.classList.add('active');
+  activeBtn.setAttribute('aria-selected','true');
   if(tab === 'planilha') renderTable();
   if(tab === 'patio') renderPatio();
 }
@@ -678,6 +732,13 @@ function setAccessType(t){
   document.querySelectorAll('.veh-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.type === t);
   });
+  const isPedestre = t === 'Pedestre';
+  document.getElementById('pedestrianNotice').classList.toggle('show', isPedestre);
+  document.getElementById('plateCardWrapper').style.display = isPedestre ? 'none' : '';
+  document.getElementById('cameraHeroTitle').textContent = isPedestre ? 'Fotografar Documento' : 'Fotografar Placa / Documento';
+  document.getElementById('cameraHeroSub').textContent = isPedestre
+    ? 'IA ativa: capture o documento para registro'
+    : 'IA ativa: identifica o veículo e lê a placa automaticamente';
 }
 
 /* =========================================================
@@ -686,21 +747,39 @@ function setAccessType(t){
 function formatPlateInput(el){
   el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
 }
+function formatConfirmPlateInput(el){
+  el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+}
+function setPlateStyle(style){
+  currentPlateStyle = style;
+  document.getElementById('plateDisplayBox').classList.toggle('cinza', style === 'cinza');
+  document.getElementById('btnPlateMercosul').classList.toggle('active', style === 'mercosul');
+  document.getElementById('btnPlateCinza').classList.toggle('active', style === 'cinza');
+  document.getElementById('plateHeaderSub').textContent = style === 'mercosul' ? 'MERCOSUL' : 'BRASIL';
+}
 function handleCpfInput(el){
   let v = el.value.replace(/\D/g,'').slice(0,11);
   v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
   el.value = v;
+  const badge = document.getElementById('cpfValidationBadge');
+  const digits = v.replace(/\D/g,'');
+  if(digits.length === 0){ badge.textContent=''; badge.className='cpf-status-badge'; return; }
+  if(digits.length === 11){ badge.textContent='✓ OK'; badge.className='cpf-status-badge ok'; }
+  else{ badge.textContent='incompleto'; badge.className='cpf-status-badge err'; }
 }
-function validarPlaca(p){
-  if(!p || p.length !== 7) return false;
-  return /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(p) || /^[A-Z]{3}[0-9]{4}$/.test(p);
-}
-function pontuarPlaca(c){
-  if(!c || c.length !== 7) return 0;
-  if(/^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(c)) return 95;
-  if(/^[A-Z]{3}[0-9]{4}$/.test(c)) return 90;
-  if(/^[A-Z]{3}/.test(c)) return 50;
-  return 20;
+
+/* =========================================================
+   MODO CONTÍNUO
+   ========================================================= */
+function toggleContinuousMode(on){
+  continuousMode = on;
+  localStorage.setItem(CONTINUOUS_KEY, on ? '1' : '0');
+  document.getElementById('cameraHero').classList.toggle('continuous', on);
+  document.getElementById('continuousHint').textContent = on
+    ? '✅ Ativo — câmera reabre após cada registro'
+    : 'Câmera reabre automaticamente após cada registro';
+  toast(on ? '🎥 Modo contínuo ativado' : '⏸ Modo contínuo desativado', on ? 'success' : 'info');
+  beep(on ? 990 : 550, 0.10);
 }
 
 /* =========================================================
@@ -713,343 +792,392 @@ function setAIStatus(state, text){
 async function bootAI(){
   setAIStatus('loading', 'Carregando IA...');
   try{
-    if(typeof tf === 'undefined' || typeof cocoSsd === 'undefined' || typeof Tesseract === 'undefined')
-      throw new Error('Bibliotecas não carregadas');
-    setAIStatus('loading', 'Baixando detector...');
+    if(typeof tf === 'undefined') throw new Error('TensorFlow.js indisponível');
+    if(typeof cocoSsd === 'undefined') throw new Error('COCO-SSD indisponível');
+    if(typeof Tesseract === 'undefined') throw new Error('Tesseract indisponível');
+
+    setAIStatus('loading', 'Baixando detector de veículos...');
     cocoModel = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
-    setAIStatus('loading', 'Preparando OCR...');
-    tesseractWorker = await Tesseract.createWorker('eng', 1);
+
+    setAIStatus('loading', 'Preparando OCR de placas...');
+    tesseractWorker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          const pct = Math.round((m.progress||0)*100);
+          setProgress(92 + Math.round(pct*0.08), 'Lendo caracteres da placa...');
+        }
+      }
+    });
     await tesseractWorker.setParameters({
       tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      tessedit_pageseg_mode: '7'
+      tessedit_pageseg_mode: '7',
+      preserve_interword_spaces: '0'
     });
+
     aiReady = true;
     setAIStatus('', '✅ IA pronta');
   }catch(err){
-    console.error(err);
+    console.error('Erro no boot da IA:', err);
     aiReady = false;
-    setAIStatus('error', '⚠ IA offline');
-    toast('IA não carregou. Digite manualmente.', 'error');
+    setAIStatus('error', '⚠ IA offline - digite manualmente');
+    toast('IA não pôde ser carregada. Digite a placa manualmente.', 'error');
   }
+}
+function setProgress(pct, label){
+  document.getElementById('aiProgress').classList.add('show');
+  document.getElementById('aiProgressFill').style.width = Math.min(100, pct) + '%';
+  document.getElementById('aiProgressPct').textContent = Math.round(pct) + '%';
+  if(label) document.getElementById('aiProgressLabel').textContent = label;
+}
+function hideProgress(){
+  setTimeout(()=>{
+    document.getElementById('aiProgress').classList.remove('show');
+    document.getElementById('aiProgressFill').style.width = '0%';
+  }, 900);
 }
 
 /* =========================================================
-   CÂMERA AO VIVO
+   CAPTURA
    ========================================================= */
-async function startLiveCamera(){
-  if(!aiReady){ toast('Aguarde a IA carregar', 'error'); return; }
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    toast('Câmera não disponível neste navegador', 'error');
-    return;
+function triggerCamera(){
+  if(!aiReady){
+    toast('IA indisponível — capture mesmo assim, você poderá digitar a placa','info');
   }
-
-  try{
-    liveStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    });
-
-    liveVideo = document.getElementById('liveVideo');
-    liveVideo.srcObject = liveStream;
-    await liveVideo.play();
-
-    // Canvas para capturar frames
-    liveCanvas = document.createElement('canvas');
-    liveCtx = liveCanvas.getContext('2d');
-
-    // UI
-    document.getElementById('cameraStage').style.display = '';
-    document.getElementById('cameraPlaceholder').style.display = 'none';
-    document.getElementById('liveDot').style.display = '';
-    document.getElementById('liveBadgeText').textContent = 'CÂMERA ATIVA • VIGIANDO';
-    document.getElementById('btnStartLive').disabled = true;
-    document.getElementById('btnStopLive').disabled = false;
-    document.getElementById('cameraStatusText').innerHTML = 'Procurando veículo...';
-
-    beep(880, 0.15);
-    toast('📹 Câmera ao vivo ativada', 'success');
-
-    liveLoopRunning = true;
-    liveProcessing = false;
-    liveFrameCount = 0;
-    liveFpsTime = Date.now();
-    lastReadPlate = null;
-    lastReadCount = 0;
-
-    requestAnimationFrame(liveLoop);
-  }catch(err){
-    console.error(err);
-    if(err.name === 'NotAllowedError'){
-      toast('Permissão de câmera negada', 'error');
-    }else if(err.name === 'NotFoundError'){
-      toast('Nenhuma câmera encontrada', 'error');
-    }else{
-      toast('Erro ao abrir câmera: ' + err.message, 'error');
-    }
-  }
+  document.getElementById('nativeCameraInput').click();
 }
 
-function stopLiveCamera(){
-  liveLoopRunning = false;
-  if(liveStream){
-    liveStream.getTracks().forEach(t => t.stop());
-    liveStream = null;
-  }
-  document.getElementById('cameraStage').style.display = 'none';
-  document.getElementById('cameraPlaceholder').style.display = '';
-  document.getElementById('liveDot').style.display = 'none';
-  document.getElementById('liveBadgeText').textContent = 'CÂMERA AO VIVO DESATIVADA';
-  document.getElementById('btnStartLive').disabled = false;
-  document.getElementById('btnStopLive').disabled = true;
-  document.getElementById('detectBoxContainer').innerHTML = '';
-  document.getElementById('aiProgress').style.display = 'none';
-  toast('Câmera desligada', 'info');
-}
+async function handleNativeImage(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async e=>{
+    attachedPhoto = e.target.result;
+    document.getElementById('photoPreviewImg').src = attachedPhoto;
+    document.getElementById('photoPreviewBox').classList.add('show');
+    document.getElementById('photoStatusTitle').textContent = 'Foto Anexada';
+    document.getElementById('photoStatusText').textContent = 'Iniciando análise...';
+    beep(660, 0.08);
 
-/* Loop principal — captura frames e processa */
-function liveLoop(){
-  if(!liveLoopRunning) return;
-
-  if(liveVideo && liveVideo.readyState >= 2){
-    liveFrameCount++;
-    const now = Date.now();
-    if(now - liveFpsTime >= 1000){
-      document.getElementById('cameraFps').textContent = liveFrameCount + ' fps';
-      liveFrameCount = 0;
-      liveFpsTime = now;
-    }
-
-    // Throttling: só processa a cada X ms
-    const interval = parseInt(document.getElementById('cfgInterval').value, 10);
-    if(!liveProcessing && now - lastDetectionTime > interval){
-      lastDetectionTime = now;
-      liveProcessing = true;
-      processLiveFrame().finally(()=>{ liveProcessing = false; });
-    }
-  }
-
-  requestAnimationFrame(liveLoop);
-}
-
-/* Processa um frame: detecta veículo e lê placa */
-async function processLiveFrame(){
-  if(!liveVideo || !liveLoopRunning) return;
-
-  const vw = liveVideo.videoWidth;
-  const vh = liveVideo.videoHeight;
-  if(!vw || !vh) return;
-
-  // Reduz para 640px de largura para detecção rápida
-  const detW = 640;
-  const detH = Math.round(vh * (detW / vw));
-  liveCanvas.width = detW;
-  liveCanvas.height = detH;
-  liveCtx.drawImage(liveVideo, 0, 0, detW, detH);
-
-  try{
-    // 1. DETECÇÃO
-    const predictions = await cocoModel.detect(liveCanvas, 5, 0.4);
-    const alvos = ['car','motorcycle','truck','bus'];
-    const veiculos = predictions.filter(p => alvos.includes(p.class));
-
-    document.getElementById('detectBoxContainer').innerHTML = '';
-
-    if(veiculos.length === 0){
-      document.getElementById('cameraStatusText').innerHTML = '🔍 Procurando veículo...';
+    if(!aiReady){
+      document.getElementById('photoStatusText').textContent = 'IA indisponível. Digite a placa manualmente.';
+      input.value = '';
       return;
     }
+    try{
+      await processImageWithAI(attachedPhoto);
+    }catch(err){
+      console.error('Erro no processamento:', err);
+      document.getElementById('photoStatusText').textContent = 'Falha na análise. Digite a placa manualmente.';
+      document.getElementById('ocrStatus').textContent = 'Não foi possível ler a placa. Digite manualmente.';
+      document.getElementById('ocrStatus').style.color = 'var(--red)';
+      hideProgress();
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
 
-    // Pega o maior veículo
-    const maior = veiculos.sort((a,b)=>(b.bbox[2]*b.bbox[3]) - (a.bbox[2]*a.bbox[3]))[0];
-    const [x, y, w, h] = maior.bbox;
+/* =========================================================
+   PIPELINE DE IA
+   ========================================================= */
+async function processImageWithAI(dataUrl){
+  setProgress(5, 'Carregando imagem...');
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = dataUrl;
+  await new Promise((res, rej)=>{ img.onload = res; img.onerror = rej; });
 
+  // 1. Detecção
+  setProgress(20, 'Detectando veículo na imagem...');
+  document.getElementById('photoStatusText').textContent = 'Detectando veículo...';
+  const predictions = await cocoModel.detect(img, 5, 0.35);
+  const alvos = ['car','motorcycle','truck','bus'];
+  const veiculos = predictions.filter(p => alvos.includes(p.class));
+
+  let tipoDetectado = null;
+  let bbox = null;
+  let confiancaVeiculo = 0;
+
+  if(veiculos.length > 0){
+    const maior = veiculos.sort((a,b)=> (b.bbox[2]*b.bbox[3]) - (a.bbox[2]*a.bbox[3]))[0];
+    bbox = maior.bbox;
+    confiancaVeiculo = maior.score;
     const mapa = {car:'Carro', motorcycle:'Moto', truck:'Caminhão', bus:'Caminhão'};
-    const tipoDetect = mapa[maior.class];
-
-    // Desenha caixa de detecção
-    const escalaX = 100 / detW;
-    const escalaY = 100 / detH;
-    const box = document.createElement('div');
-    box.className = 'detect-box';
-    box.dataset.label = tipoDetect;
-    box.style.left   = (x * escalaX) + '%';
-    box.style.top    = (y * escalaY) + '%';
-    box.style.width  = (w * escalaX) + '%';
-    box.style.height = (h * escalaY) + '%';
-    document.getElementById('detectBoxContainer').appendChild(box);
-
-    document.getElementById('cameraStatusText').innerHTML = `🚗 <strong>${tipoDetect}</strong> detectado — lendo placa...`;
-    document.getElementById('aiProgress').style.display = '';
-    setLiveProgress(30, 'Veículo detectado');
-
-    // 2. OCR na região inferior do veículo (onde fica a placa)
-    const placaY = y + h * 0.55;
-    const placaH = h * 0.45;
-    const crop = cropFrameFromVideo(liveVideo, x, placaY, w, placaH, vw/detW);
-
-    setLiveProgress(60, 'Lendo placa...');
-    const { data: { text } } = await tesseractWorker.recognize(crop);
-    const limpo = (text||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-
-    // Extrai candidatos de 7 caracteres
-    let melhor = null, melhorScore = 0;
-    if(limpo.length >= 7){
-      for(let i=0; i <= limpo.length - 7; i++){
-        const cand = limpo.slice(i, i+7);
-        const sc = pontuarPlaca(cand);
-        if(sc > melhorScore){ melhorScore = sc; melhor = cand; }
-      }
+    tipoDetectado = mapa[maior.class];
+    setAccessType(tipoDetectado);
+    document.querySelectorAll('.veh-btn .auto-badge').forEach(b=>b.remove());
+    const btn = document.querySelector(`.veh-btn[data-type="${tipoDetectado}"]`);
+    if(btn){
+      const tag = document.createElement('span');
+      tag.className = 'auto-badge';
+      tag.textContent = 'IA';
+      btn.appendChild(tag);
     }
+    document.getElementById('photoStatusText').textContent = `Veículo: ${tipoDetectado} (${Math.round(maior.score*100)}%)`;
+    beep(980,0.10);
+  }else{
+    document.getElementById('photoStatusText').textContent = 'Nenhum veículo detectado — tentando ler a placa na imagem inteira...';
+  }
 
-    setLiveProgress(100, 'Concluído');
-    setTimeout(()=>document.getElementById('aiProgress').style.display = 'none', 600);
+  // 2. Crops
+  setProgress(45, 'Preparando regiões para leitura da placa...');
+  const crops = buildCrops(img, bbox);
 
-    if(!melhor || melhorScore < 40){
-      document.getElementById('cameraStatusText').innerHTML = `⚠ <strong>${tipoDetect}</strong> — não consegui ler a placa. Aproxime.`;
-      return;
-    }
+  // 3. OCR
+  let melhorResultado = null;
+  let melhorScore = 0; // 0-100
 
-    // Voto de confiança: se a mesma placa for lida 2x, aceita
-    if(melhor === lastReadPlate){
-      lastReadCount++;
-    }else{
-      lastReadPlate = melhor;
-      lastReadCount = 1;
-    }
-
-    const minConf = parseInt(document.getElementById('cfgMinConf').value, 10);
-    const scoreFinal = Math.min(100, Math.round(melhorScore * 0.7 + (lastReadCount >= 2 ? 30 : 0)));
-
-    document.getElementById('cameraStatusText').innerHTML =
-      `✓ Placa: <strong>${melhor}</strong> (${scoreFinal}%)`;
-
-    if(scoreFinal >= minConf){
-      // CONFIRMADO — para câmera
-      setAccessType(tipoDetect);
-      beep(1300, 0.15);
-
-      if(document.getElementById('cfgConfirmBefore').checked){
-        // Mostrar modal
-        stopLiveCamera();
-        abrirConfirmacaoPlaca(melhor, scoreFinal, tipoDetect);
-      }else{
-        aplicarPlaca(melhor, scoreFinal, 'alta');
-        stopLiveCamera();
-        if(document.getElementById('cfgAutoFill').checked){
-          toast(`✓ Placa ${melhor} preenchida`, 'success');
-          beep(1400, 0.18);
+  for(let i=0; i<crops.length; i++){
+    setProgress(55 + Math.round((i/crops.length)*35), `Lendo placa (tentativa ${i+1}/${crops.length})...`);
+    try{
+      const { data: { text } } = await tesseractWorker.recognize(crops[i]);
+      const limpo = (text||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      const candidatos = extrairCandidatos(limpo);
+      for(const c of candidatos){
+        const score = pontuarCandidato(c);
+        if(score > melhorScore){
+          melhorScore = score;
+          melhorResultado = c;
         }
       }
+      if(melhorScore >= 90) break;
+    }catch(err){
+      console.warn('Falha OCR no crop', i, err);
     }
-  }catch(err){
-    console.warn('Erro no frame:', err);
   }
+
+  // Confiança final combinada (0-100)
+  const confiancaFinal = Math.round(
+    (confiancaVeiculo * 0.35 + (melhorScore/100) * 0.65) * 100
+  );
+
+  setProgress(100, 'Concluído!');
+
+  // 4. Decide o que fazer com base na confiança
+  const placaValida = melhorResultado && validarPlaca(melhorResultado);
+
+  if(placaValida && confiancaFinal >= 75){
+    // Alta confiança: aceita direto
+    aplicarPlaca(melhorResultado, confiancaFinal, 'alta');
+    document.getElementById('photoStatusText').textContent = `Placa: ${melhorResultado} (${confiancaFinal}%)`;
+    document.getElementById('photoStatusTitle').textContent = 'Leitura Automática Concluída';
+    toast(`Placa reconhecida: ${melhorResultado}`, 'success');
+    beep(1200, 0.15);
+  }else if(melhorResultado && (placaValida || melhorResultado.length >= 6)){
+    // Confiança média: abre modal de confirmação
+    document.getElementById('photoStatusTitle').textContent = 'Confirme a leitura';
+    document.getElementById('photoStatusText').textContent = 'A IA não tem certeza — confirme a placa.';
+    abrirConfirmacaoPlaca(melhorResultado, confiancaFinal, confiancaVeiculo, tipoDetectado);
+  }else{
+    // Baixa: pede digitação manual
+    document.getElementById('ocrStatus').textContent = 'Não foi possível ler a placa. Digite manualmente.';
+    document.getElementById('ocrStatus').style.color = 'var(--red)';
+    document.getElementById('photoStatusText').textContent = 'Sem leitura automática. Digite a placa.';
+    document.getElementById('photoStatusTitle').textContent = 'Processamento Concluído';
+    toast('Digite a placa manualmente', 'error');
+  }
+  hideProgress();
 }
 
-/* Recorta uma região do vídeo e pré-processa para OCR */
-function cropFrameFromVideo(video, sx, sy, sw, sh, scaleFactor){
-  // Converte de coordenadas do canvas reduzido para o vídeo original
-  const factor = scaleFactor || 1;
-  sx *= factor; sy *= factor; sw *= factor; sh *= factor;
+/* Aplica placa no input principal */
+function aplicarPlaca(placa, confianca, nivel){
+  document.getElementById('inputPlate').value = placa;
+  const cor = nivel === 'alta' ? 'var(--green)' : 'var(--gold-light)';
+  document.getElementById('ocrStatus').textContent = `✓ Placa reconhecida: ${placa} (${confianca}%)`;
+  document.getElementById('ocrStatus').style.color = cor;
+}
 
+/* =========================================================
+   MODAL DE CONFIRMAÇÃO DE PLACA
+   ========================================================= */
+function abrirConfirmacaoPlaca(placa, confianca, confiancaVeiculo, tipoDetectado){
+  pendingPlateConfirm = { placa, confianca, tipoDetectado };
+
+  const bar = document.getElementById('confidenceBar');
+  const pct = document.getElementById('confidencePct');
+  const detail = document.getElementById('confidenceDetail');
+  const msg = document.getElementById('plateConfirmMessage');
+
+  pct.textContent = confianca + '%';
+  bar.style.width = Math.min(100, confianca) + '%';
+
+  if(confianca >= 60){
+    bar.className = 'confidence-bar-fill medium';
+    msg.textContent = 'A IA fez uma leitura razoável. Confirme ou ajuste.';
+  }else{
+    bar.className = 'confidence-bar-fill low';
+    msg.textContent = 'A IA tem pouca certeza desta leitura. Verifique com atenção.';
+  }
+
+  const partes = [];
+  if(tipoDetectado) partes.push(`Veículo: ${tipoDetectado} (${Math.round(confiancaVeiculo*100)}%)`);
+  partes.push(`OCR: ${confianca}%`);
+  detail.textContent = partes.join(' • ');
+
+  document.getElementById('confirmPlateInput').value = placa;
+  document.getElementById('plateConfirmModal').classList.add('show');
+
+  setTimeout(()=>{
+    document.getElementById('confirmPlateInput').focus();
+    document.getElementById('confirmPlateInput').select();
+  }, 150);
+}
+
+function cancelPlateConfirm(){
+  pendingPlateConfirm = null;
+  document.getElementById('plateConfirmModal').classList.remove('show');
+  document.getElementById('ocrStatus').textContent = 'Corrija a placa no campo abaixo e salve.';
+  document.getElementById('ocrStatus').style.color = 'var(--gold-light)';
+  document.getElementById('photoStatusText').textContent = 'Corrija a placa manualmente.';
+  setTimeout(()=>document.getElementById('inputPlate').focus(), 200);
+}
+
+function acceptPlateConfirm(){
+  const el = document.getElementById('confirmPlateInput');
+  const placa = (el.value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+  if(!placa){
+    toast('Informe a placa para continuar','error');
+    el.focus();
+    return;
+  }
+  if(!validarPlaca(placa)){
+    if(!confirm('A placa "' + placa + '" não segue o padrão (ABC1D23 ou ABC1234). Usar assim mesmo?')){
+      el.focus();
+      return;
+    }
+  }
+  aplicarPlaca(placa, pendingPlateConfirm?.confianca || 100, 'alta');
+  document.getElementById('photoStatusTitle').textContent = 'Placa Confirmada';
+  document.getElementById('photoStatusText').textContent = `Placa final: ${placa}`;
+  document.getElementById('plateConfirmModal').classList.remove('show');
+  pendingPlateConfirm = null;
+  toast(`✓ Placa confirmada: ${placa}`, 'success');
+  beep(1200, 0.15);
+}
+
+/* =========================================================
+   CROPS / OCR / SCORE
+   ========================================================= */
+function buildCrops(img, bbox){
+  const crops = [];
+  if(bbox){
+    const [x,y,w,h] = bbox;
+    crops.push(cropAndPreprocess(img, x, y + h*0.5, w, h*0.5));
+    crops.push(cropAndPreprocess(img, x, y + h*0.6, w, h*0.4));
+    crops.push(cropAndPreprocess(img, Math.max(0,x - w*0.1), y + h*0.65, w*1.2, h*0.35));
+  }
+  crops.push(cropAndPreprocess(img, 0, img.height*0.5, img.width, img.height*0.5));
+  crops.push(cropAndPreprocess(img, 0, 0, img.width, img.height));
+  return crops;
+}
+
+function cropAndPreprocess(img, sx, sy, sw, sh){
   sx = Math.max(0, Math.floor(sx));
   sy = Math.max(0, Math.floor(sy));
   sw = Math.max(1, Math.floor(sw));
   sh = Math.max(1, Math.floor(sh));
-  if(sx + sw > video.videoWidth)  sw = video.videoWidth - sx;
-  if(sy + sh > video.videoHeight) sh = video.videoHeight - sy;
+  if(sx + sw > img.width)  sw = img.width - sx;
+  if(sy + sh > img.height) sh = img.height - sy;
 
-  // Upscale para o OCR ler melhor
-  const escala = Math.min(3, Math.max(1, 800 / sw));
-  const cw = Math.floor(sw * escala);
-  const ch = Math.floor(sh * escala);
+  const scale = Math.min(3, Math.max(1, 900 / sw));
+  const w = Math.floor(sw * scale);
+  const h = Math.floor(sh * scale);
 
-  const c = document.createElement('canvas');
-  c.width = cw; c.height = ch;
-  const ctx = c.getContext('2d');
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
 
-  // Pré-processamento: cinza + binarização
   try{
-    const img = ctx.getImageData(0, 0, cw, ch);
-    const d = img.data;
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
     let soma = 0;
-    for(let i=0; i<d.length; i+=4){
-      const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-      d[i] = d[i+1] = d[i+2] = g;
+    for(let i=0; i<data.length; i+=4){
+      const g = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+      data[i] = data[i+1] = data[i+2] = g;
       soma += g;
     }
-    const lim = (soma / (d.length/4)) * 0.85;
-    for(let i=0; i<d.length; i+=4){
-      const v = d[i] > lim ? 255 : 0;
-      d[i] = d[i+1] = d[i+2] = v;
+    const media = soma / (data.length / 4);
+    const limite = media * 0.85;
+    for(let i=0; i<data.length; i+=4){
+      const v = data[i] > limite ? 255 : 0;
+      data[i] = data[i+1] = data[i+2] = v;
     }
-    ctx.putImageData(img, 0, 0);
-  }catch(e){}
+    ctx.putImageData(imageData, 0, 0);
+  }catch(e){ console.warn('Pré-processamento falhou:', e); }
 
-  return c.toDataURL('image/png');
+  return canvas.toDataURL('image/png');
 }
 
-function setLiveProgress(pct, label){
-  document.getElementById('aiProgress').style.display = '';
-  document.getElementById('aiProgressFill').style.width = pct + '%';
-  document.getElementById('aiProgressPct').textContent = pct + '%';
-  if(label) document.getElementById('aiProgressLabel').textContent = label;
+function extrairCandidatos(texto){
+  const candidatos = new Set();
+  const t = texto.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(t.length >= 7){
+    for(let i=0; i <= t.length - 7; i++) candidatos.add(t.slice(i, i+7));
+  }
+  if(t.length >= 7 && t.length <= 10){
+    candidatos.add(t.slice(0,7));
+    candidatos.add(t.slice(-7));
+  }
+  return Array.from(candidatos);
+}
+
+function validarPlaca(placa){
+  if(!placa || placa.length !== 7) return false;
+  if(/^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(placa)) return true;
+  if(/^[A-Z]{3}[0-9]{4}$/.test(placa)) return true;
+  return false;
+}
+
+/* Pontua um candidato de 0 a 100 com base em quão "plausível" ele é */
+function pontuarCandidato(c){
+  if(!c || c.length !== 7) return 0;
+  let score = 0;
+
+  // Estrutura correta vale muito
+  if(/^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(c)) score += 90;        // Mercosul exato
+  else if(/^[A-Z]{3}[0-9]{4}$/.test(c))     score += 85;         // Antigo exato
+  else{
+    // Estrutura parcial: 3 letras + 4 números/algo
+    if(/^[A-Z]{3}/.test(c)) score += 25;
+    if(/[0-9]/.test(c))     score += 10;
+    // Penaliza letras repetidas em sequência
+    if(/(.)\1{2,}/.test(c)) score -= 15;
+  }
+
+  // Bônus por posição: placa costuma ter 3 letras + 4 caracteres mistos
+  const letras = (c.match(/[A-Z]/g)||[]).length;
+  const nums   = (c.match(/[0-9]/g)||[]).length;
+  if(letras >= 4 && letras <= 5 && nums >= 2 && nums <= 3) score += 5;
+
+  return Math.max(0, Math.min(100, score));
 }
 
 /* =========================================================
-   APLICAR PLACA / CONFIRMAÇÃO
+   LIMPAR FOTO
    ========================================================= */
-function aplicarPlaca(placa, confianca, nivel){
-  document.getElementById('inputPlate').value = placa;
-  const el = document.getElementById('ocrStatus');
-  const cor = nivel === 'alta' ? 'var(--green)' : 'var(--gold-light)';
-  el.textContent = `✓ Placa ${placa} (${confianca}% confiança)`;
-  el.style.color = cor;
-}
-
-function abrirConfirmacaoPlaca(placa, confianca, tipoDetect){
-  pendingPlateConfirm = {placa, confianca};
-  document.getElementById('confirmPlateInput').value = placa;
-  document.getElementById('confirmConfidence').textContent = confianca + '%';
-  document.getElementById('confirmBar').style.width = confianca + '%';
-  document.getElementById('confirmBar').style.background = confianca >= 80
-    ? 'linear-gradient(90deg,var(--green),#4ade80)'
-    : confianca >= 60
-      ? 'linear-gradient(90deg,var(--gold),var(--gold-light))'
-      : 'linear-gradient(90deg,var(--red),#fb7185)';
-  document.getElementById('confirmInfo').textContent =
-    `A câmera detectou um ${tipoDetect || currentType} e leu a placa abaixo. Confirme ou ajuste.`;
-  document.getElementById('plateConfirmModal').classList.add('show');
-  setTimeout(()=>{
-    const i = document.getElementById('confirmPlateInput');
-    i.focus(); i.select();
-  }, 150);
-}
-function cancelPlateConfirm(){
-  document.getElementById('plateConfirmModal').classList.remove('show');
-  pendingPlateConfirm = null;
-  document.getElementById('ocrStatus').textContent = 'Corrija a placa manualmente';
-  document.getElementById('ocrStatus').style.color = 'var(--gold-light)';
-}
-function acceptPlateConfirm(){
-  const placa = document.getElementById('confirmPlateInput').value.trim().toUpperCase();
-  if(!placa){ toast('Informe a placa', 'error'); return; }
-  aplicarPlaca(placa, pendingPlateConfirm?.confianca || 100, 'alta');
-  document.getElementById('plateConfirmModal').classList.remove('show');
-  pendingPlateConfirm = null;
-  toast(`✓ Placa ${placa} aplicada`, 'success');
-  beep(1400, 0.18);
+function removeAttachedPhoto(){
+  attachedPhoto = null;
+  document.getElementById('photoPreviewImg').src = '';
+  document.getElementById('photoPreviewBox').classList.remove('show');
+  document.getElementById('nativeCameraInput').value = '';
+  document.getElementById('ocrStatus').textContent = 'Capture a foto para leitura automática por IA ou digite a placa acima';
+  document.getElementById('ocrStatus').style.color = 'var(--text-muted)';
+  document.querySelectorAll('.veh-btn .auto-badge').forEach(b=>b.remove());
 }
 
 /* =========================================================
-   PERSISTÊNCIA E REGISTRO
+   CHIPS
+   ========================================================= */
+function fillDestination(txt){
+  const el = document.getElementById('inputDestination');
+  el.value = el.value ? el.value + ' • ' + txt : txt;
+}
+
+/* =========================================================
+   PERSISTÊNCIA
    ========================================================= */
 function loadRecords(){
   try{
@@ -1060,39 +1188,55 @@ function loadRecords(){
 }
 function saveRecords(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
-  catch(e){ toast('Erro ao salvar', 'error'); }
+  catch(e){ toast('Armazenamento cheio. Exporte um backup!','error'); }
 }
 
+/* =========================================================
+   REGISTRAR
+   ========================================================= */
 function saveRecord(emitTicket){
   const plate = document.getElementById('inputPlate').value.trim().toUpperCase();
   const name = document.getElementById('inputPersonName').value.trim();
   const cpf = document.getElementById('inputCpf').value.trim();
-  const dest = document.getElementById('inputDestination').value.trim();
+  const destination = document.getElementById('inputDestination').value.trim();
   const notes = document.getElementById('inputNotes').value.trim();
 
-  if(currentType !== 'Pedestre' && !plate){ toast('Informe a placa', 'error'); return; }
-  if(!name){ toast('Informe o nome', 'error'); return; }
+  if(currentType !== 'Pedestre' && !plate){ toast('Informe a placa do veículo','error'); return; }
+  if(!name){ toast('Informe o nome do condutor / pessoa','error'); return; }
 
-  records.push({
-    id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
+  const rec = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
     timestamp: Date.now(),
     movement: currentMovement,
     type: currentType,
     plate: currentType === 'Pedestre' ? '—' : plate,
-    name, cpf, destination: dest, notes
-  });
+    name, cpf, destination, notes,
+    photo: attachedPhoto
+  };
+  records.push(rec);
   saveRecords();
   updateStats(); renderTable(); renderPatio();
-  beep(880, 0.14);
-  toast(`✅ ${currentMovement} registrada`, 'success');
-  if(emitTicket) toast('🎫 Ticket emitido', 'info');
+  beep(currentMovement === 'Entrada' ? 880 : 440, 0.14);
+  toast(`✅ ${currentMovement} registrada para ${name}`,'success');
+  if(emitTicket) toast('🎫 Ticket emitido','info');
 
-  // Limpar
-  ['inputPlate','inputPersonName','inputCpf','inputDestination','inputNotes'].forEach(id=>{
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('ocrStatus').textContent = 'Aguardando leitura automática ou digite a placa';
-  document.getElementById('ocrStatus').style.color = 'var(--text-muted)';
+  // Limpa
+  document.getElementById('inputPlate').value = '';
+  document.getElementById('inputPersonName').value = '';
+  document.getElementById('inputCpf').value = '';
+  document.getElementById('inputDestination').value = '';
+  document.getElementById('inputNotes').value = '';
+  document.getElementById('cpfValidationBadge').textContent = '';
+  document.getElementById('cpfValidationBadge').className = 'cpf-status-badge';
+  removeAttachedPhoto();
+
+  // MODO CONTÍNUO: reabre câmera
+  if(continuousMode){
+    toast('🎥 Modo contínuo: reabrindo câmera...', 'info');
+    setTimeout(()=>{
+      document.getElementById('nativeCameraInput').click();
+    }, 900);
+  }
 }
 
 /* =========================================================
@@ -1100,19 +1244,25 @@ function saveRecord(emitTicket){
    ========================================================= */
 function updateStats(){
   const hoje = new Date().toDateString();
-  const today = records.filter(r => new Date(r.timestamp).toDateString() === hoje);
+  const today = records.filter(r=> new Date(r.timestamp).toDateString() === hoje);
   const presentes = getPresentes();
-  document.getElementById('statPatio').textContent = presentes.filter(p=>p.type!=='Pedestre').length;
-  document.getElementById('statPedestres').textContent = presentes.filter(p=>p.type==='Pedestre').length;
-  document.getElementById('statEntradas').textContent = today.filter(r=>r.movement==='Entrada').length;
-  document.getElementById('statSaidas').textContent = today.filter(r=>r.movement==='Saída').length;
+  const statPatio = presentes.filter(p=> p.type !== 'Pedestre').length;
+  const statPed = presentes.filter(p=> p.type === 'Pedestre').length;
+  document.getElementById('statPatio').textContent = statPatio;
+  document.getElementById('statPedestres').textContent = statPed;
+  document.getElementById('statEntradas').textContent = today.filter(r=> r.movement === 'Entrada').length;
+  document.getElementById('statSaidas').textContent = today.filter(r=> r.movement === 'Saída').length;
   document.getElementById('statTotal').textContent = records.length;
   document.getElementById('tabCountPresentes').textContent = presentes.length;
+  document.getElementById('totalPresentesBadge').textContent = presentes.length;
 }
 function getPresentes(){
   const map = new Map();
-  [...records].sort((a,b)=>a.timestamp-b.timestamp).forEach(r=>{
-    const key = r.type === 'Pedestre' ? 'P:'+(r.cpf||r.name) : 'V:'+(r.plate||'').toUpperCase();
+  const ordenado = [...records].sort((a,b)=> a.timestamp - b.timestamp);
+  ordenado.forEach(r=>{
+    const key = r.type === 'Pedestre'
+      ? 'P:' + (r.cpf || r.name.toLowerCase())
+      : 'V:' + (r.plate||'').toUpperCase();
     if(r.movement === 'Entrada') map.set(key, r);
     else if(r.movement === 'Saída') map.delete(key);
   });
@@ -1120,178 +1270,230 @@ function getPresentes(){
 }
 
 /* =========================================================
-   RENDER
+   RENDER TABELAS
    ========================================================= */
 function renderTable(){
   const tbody = document.getElementById('spreadsheetBody');
-  const q = (document.getElementById('searchTable').value||'').toLowerCase();
-  const fT = document.getElementById('filterType').value;
-  const fM = document.getElementById('filterMovement').value;
+  const q = (document.getElementById('searchTable').value || '').toLowerCase();
+  const fType = document.getElementById('filterType').value;
+  const fMov = document.getElementById('filterMovement').value;
   const list = records.filter(r=>{
-    if(fT !== 'ALL' && r.type !== fT) return false;
-    if(fM !== 'ALL' && r.movement !== fM) return false;
-    if(q && !`${r.plate} ${r.name} ${r.cpf} ${r.destination}`.toLowerCase().includes(q)) return false;
+    if(fType !== 'ALL' && r.type !== fType) return false;
+    if(fMov !== 'ALL' && r.movement !== fMov) return false;
+    if(q){
+      const blob = `${r.plate} ${r.name} ${r.cpf} ${r.destination} ${r.notes}`.toLowerCase();
+      if(!blob.includes(q)) return false;
+    }
     return true;
-  }).sort((a,b)=>b.timestamp-a.timestamp);
+  }).sort((a,b)=> b.timestamp - a.timestamp);
 
-  if(!list.length){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Nenhum registro</td></tr>`;
+  if(list.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="10">Nenhum registro encontrado.</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(r=>{
-    const dt = new Date(r.timestamp).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const dt = new Date(r.timestamp);
+    const hora = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const photo = r.photo
+      ? `<img src="${r.photo}" class="thumb" alt="Foto" onclick="openPhoto('${r.id}')">`
+      : `<div class="thumb-empty">—</div>`;
     return `<tr>
-      <td>${dt}</td>
+      <td>${hora}</td>
+      <td style="text-align:center;">${photo}</td>
       <td><span class="row-plate">${escapeHtml(r.plate)}</span></td>
       <td><span class="badge tipo-${r.type}">${r.type}</span></td>
       <td><span class="badge mov-${r.movement}">${r.movement}</span></td>
       <td><span class="row-name">${escapeHtml(r.name)}</span></td>
-      <td>${escapeHtml(r.cpf||'—')}</td>
-      <td>${escapeHtml(r.destination||'—')}</td>
-      <td>${escapeHtml(r.notes||'—')}</td>
-      <td style="text-align:center;">
-        <button class="icon-btn danger" onclick="deleteRecord('${r.id}')">✕</button>
-      </td>
+      <td>${escapeHtml(r.cpf || '—')}</td>
+      <td>${escapeHtml(r.destination || '—')}</td>
+      <td>${escapeHtml(r.notes || '—')}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn danger" title="Excluir" onclick="deleteRecord('${r.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div></td>
     </tr>`;
   }).join('');
 }
+function openPhoto(id){
+  const r = records.find(x=> x.id === id);
+  if(!r || !r.photo) return;
+  const w = window.open();
+  w.document.write(`<title>Foto - ${r.plate}</title><body style="margin:0;background:#000;display:grid;place-items:center;height:100vh"><img src="${r.photo}" style="max-width:100%;max-height:100%"></body>`);
+}
 function deleteRecord(id){
-  if(!confirm('Excluir?')) return;
-  records = records.filter(r=>r.id!==id);
-  saveRecords(); updateStats(); renderTable(); renderPatio();
-  toast('Excluído', 'info');
+  if(!confirm('Excluir este registro?')) return;
+  records = records.filter(r=> r.id !== id);
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  toast('Registro excluído','info');
 }
 function renderPatio(){
   const tbody = document.getElementById('patioBody');
-  const p = getPresentes().sort((a,b)=>a.timestamp-b.timestamp);
-  if(!p.length){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Ninguém no pátio</td></tr>`;
+  const presentes = getPresentes().sort((a,b)=> a.timestamp - b.timestamp);
+  if(presentes.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Nenhum veículo ou pedestre presente no momento.</td></tr>`;
     return;
   }
-  tbody.innerHTML = p.map(r=>{
-    const dt = new Date(r.timestamp).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  tbody.innerHTML = presentes.map(r=>{
+    const dt = new Date(r.timestamp);
+    const hora = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const diff = Date.now() - r.timestamp;
-    const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
-    const perm = h>0 ? `${h}h ${m}min` : `${m}min`;
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const permanencia = h>0 ? `${h}h ${m}min` : `${m}min`;
     return `<tr>
-      <td>${dt}</td>
+      <td>${hora}</td>
       <td><span class="row-plate">${escapeHtml(r.plate)}</span></td>
       <td><span class="badge tipo-${r.type}">${r.type}</span></td>
-      <td>${escapeHtml(r.name)}</td>
-      <td>${escapeHtml(r.destination||'—')}</td>
-      <td>${perm}</td>
+      <td><span class="row-name">${escapeHtml(r.name)}</span></td>
+      <td>${escapeHtml(r.cpf || '—')}</td>
+      <td>${escapeHtml(r.destination || '—')}</td>
+      <td>${permanencia}</td>
       <td style="text-align:center;">
-        <button class="btn-save btn-save-ticket" onclick="registrarSaida('${r.id}')" style="padding:6px 10px;font-size:10px;">Saída</button>
+        <button class="btn-action btn-export-excel" onclick="registrarSaida('${r.id}')" style="padding:6px 12px;">Registrar Saída</button>
       </td>
     </tr>`;
   }).join('');
 }
 function registrarSaida(id){
-  const r = records.find(x=>x.id===id);
+  const r = records.find(x=> x.id === id);
   if(!r) return;
-  records.push({...r, id: Date.now()+'-'+Math.random().toString(36).slice(2,6), timestamp: Date.now(), movement:'Saída'});
-  saveRecords(); updateStats(); renderTable(); renderPatio();
-  beep(440, 0.14);
-  toast(`Saída: ${r.name}`, 'success');
+  records.push({
+    ...r,
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
+    timestamp: Date.now(),
+    movement: 'Saída'
+  });
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  beep(440,0.14);
+  toast(`Saída registrada para ${r.name}`,'success');
 }
 
 /* =========================================================
-   CSV / BACKUP
+   EXPORT / IMPRESSÃO / BACKUP
    ========================================================= */
 function exportToCSV(){
-  if(!records.length){ toast('Nada para exportar', 'error'); return; }
-  const header = ['Data/Hora','Movimento','Tipo','Placa','Nome','CPF','Destino','Obs'];
+  if(records.length === 0){ toast('Nada para exportar','error'); return; }
+  const header = ['Data/Hora','Movimento','Tipo','Placa','Nome','CPF','Destino','Observações'];
   const rows = records.map(r=>{
-    const d = new Date(r.timestamp).toLocaleString('pt-BR');
-    return [d, r.movement, r.type, r.plate, r.name, r.cpf, r.destination, r.notes]
-      .map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');
+    const dt = new Date(r.timestamp).toLocaleString('pt-BR');
+    return [dt, r.movement, r.type, r.plate, r.name, r.cpf, r.destination, r.notes]
+      .map(v=> `"${String(v||'').replace(/"/g,'""')}"`).join(',');
   });
   const csv = '\uFEFF' + [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.href = URL.createObjectURL(blob);
   a.download = `registros_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
-  toast('CSV gerado', 'success');
+  toast('Arquivo CSV gerado','success');
 }
+function printSpreadsheet(){ window.print(); }
 function openBackupModal(){ document.getElementById('backupModal').classList.add('show'); }
 function closeBackupModal(){ document.getElementById('backupModal').classList.remove('show'); }
 function exportBackupJSON(){
-  const blob = new Blob([JSON.stringify({gerado: new Date().toISOString(), registros: records}, null, 2)], {type:'application/json'});
+  const data = { gerado: new Date().toISOString(), versao: 3, registros: records };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `backup_portaria_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
-  toast('Backup gerado', 'success');
+  toast('Backup gerado','success');
 }
 function handleRestoreFile(input){
-  const f = input.files && input.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = e=>{
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
     try{
-      const d = JSON.parse(e.target.result);
-      records = Array.isArray(d) ? d : (Array.isArray(d.registros) ? d.registros : null);
-      if(!records) throw new Error();
-      saveRecords(); updateStats(); renderTable(); renderPatio();
-      toast('Backup restaurado', 'success'); closeBackupModal();
-    }catch(err){ toast('Arquivo inválido', 'error'); }
+      const data = JSON.parse(e.target.result);
+      if(Array.isArray(data)) records = data;
+      else if(Array.isArray(data.registros)) records = data.registros;
+      else throw new Error('formato');
+      saveRecords();
+      updateStats(); renderTable(); renderPatio();
+      toast('Backup restaurado com sucesso','success');
+      closeBackupModal();
+    }catch(err){ toast('Arquivo inválido','error'); }
   };
-  r.readAsText(f);
+  reader.readAsText(file);
   input.value = '';
 }
 function clearAllData(){
-  if(!confirm('Apagar TODOS os registros?')) return;
-  records = []; saveRecords(); updateStats(); renderTable(); renderPatio();
-  toast('Dados apagados', 'info');
+  if(!confirm('Isso apagará TODOS os registros. Continuar?')) return;
+  records = [];
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  toast('Todos os dados foram apagados','info');
 }
+
+/* =========================================================
+   DEMO
+   ========================================================= */
 function seedDemoData(){
+  const agora = Date.now();
   const demo = [
-    {m:'Entrada', t:'Carro', p:'ABC1D23', n:'Roberto Carlos', c:'123.456.789-01', d:'Apto 302', o:'Crachá'},
-    {m:'Entrada', t:'Moto', p:'XYZ9K88', n:'Marcos Andrade', c:'987.654.321-00', d:'Delivery', o:'iFood'},
-    {m:'Saída', t:'Carro', p:'ABC1D23', n:'Roberto Carlos', c:'123.456.789-01', d:'Apto 302', o:''},
-    {m:'Entrada', t:'Pedestre', p:'—', n:'Juliana Freitas', c:'111.222.333-44', d:'Adm', o:'Reunião'},
-    {m:'Entrada', t:'Caminhão', p:'QWE4R56', n:'Transportes Alfa', c:'555.666.777-88', d:'Bloco B', o:'Entrega'}
+    {mov:'Entrada', tipo:'Carro',    placa:'ABC1D23', nome:'Roberto Carlos',   cpf:'123.456.789-01', dest:'Apto 302 - Bloco A', obs:'Crachá #12'},
+    {mov:'Entrada', tipo:'Moto',     placa:'XYZ9K88', nome:'Marcos Andrade',   cpf:'987.654.321-00', dest:'Delivery',           obs:'iFood'},
+    {mov:'Saída',   tipo:'Carro',    placa:'ABC1D23', nome:'Roberto Carlos',   cpf:'123.456.789-01', dest:'Apto 302 - Bloco A', obs:'Saída normal'},
+    {mov:'Entrada', tipo:'Pedestre', placa:'—',       nome:'Juliana Freitas',  cpf:'111.222.333-44', dest:'Administração',      obs:'Reunião'},
+    {mov:'Entrada', tipo:'Caminhão', placa:'QWE4R56', nome:'Transportes Alfa', cpf:'555.666.777-88', dest:'Bloco B',            obs:'Entrega grande'},
+    {mov:'Entrada', tipo:'Carro',    placa:'LMN7P90', nome:'Carlos Souza',     cpf:'222.333.444-55', dest:'Apto 105',           obs:''}
   ];
-  demo.forEach((x,i)=>{
+  demo.forEach((d,i)=>{
     records.push({
-      id: 'demo-'+i+'-'+Math.random().toString(36).slice(2,6),
-      timestamp: Date.now() - i*15*60000,
-      movement: x.m, type: x.t, plate: x.p, name: x.n, cpf: x.c, destination: x.d, notes: x.o
+      id: 'demo-' + i + '-' + Math.random().toString(36).slice(2,6),
+      timestamp: agora - (i * 15 * 60000),
+      movement: d.mov, type: d.tipo, plate: d.placa,
+      name: d.nome, cpf: d.cpf, destination: d.dest, notes: d.obs,
+      photo: null
     });
   });
-  saveRecords(); updateStats(); renderTable(); renderPatio();
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
   closeBackupModal();
-  toast('Demo carregado', 'success');
+  toast('Dados de demonstração carregados','success');
 }
 
 /* =========================================================
    EVENTOS
    ========================================================= */
-document.getElementById('confirmPlateInput').addEventListener('keydown', e=>{
-  if(e.key === 'Enter') acceptPlateConfirm();
-  if(e.key === 'Escape') cancelPlateConfirm();
-});
 document.getElementById('backupModal').addEventListener('click', e=>{
   if(e.target.id === 'backupModal') closeBackupModal();
 });
 document.getElementById('plateConfirmModal').addEventListener('click', e=>{
   if(e.target.id === 'plateConfirmModal') cancelPlateConfirm();
 });
-
-/* Verifica HTTPS para aviso */
-if(location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1'){
-  document.getElementById('httpsWarning').classList.add('show');
-}
-
-/* Parar câmera ao sair */
-window.addEventListener('beforeunload', ()=>{ if(liveStream) stopLiveCamera(); });
+document.getElementById('confirmPlateInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); acceptPlateConfirm(); }
+  if(e.key === 'Escape'){ e.preventDefault(); cancelPlateConfirm(); }
+});
+setInterval(()=>{
+  if(document.getElementById('tabContentPatio').style.display !== 'none'){
+    renderPatio();
+  }
+}, 30000);
 
 /* =========================================================
    INIT
    ========================================================= */
 window.addEventListener('load', ()=>{
-  loadRecords(); updateStats(); renderTable(); renderPatio();
+  loadRecords();
+  updateStats();
+  renderTable();
+  renderPatio();
   setAccessType('Carro');
+
+  // Restaura modo contínuo
+  const saved = localStorage.getItem(CONTINUOUS_KEY);
+  if(saved === '1'){
+    document.getElementById('continuousToggle').checked = true;
+    toggleContinuousMode(true);
+  }
+
+  // Boot da IA
   bootAI();
 });
 </script>
