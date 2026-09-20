@@ -1,34 +1,603 @@
-<div class="header-right">
-    <div class="clock-card">
-      <div class="clock-display" id="clockTime">--:--:--</div>
-      <div class="date-display" id="clockDate">Hoje</div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Acesso • Portaria Inteligente</title>
+<style>
+/* =========================================================
+   VARIÁVEIS DE TEMA (cores)
+   ========================================================= */
+:root{
+  --bg-0:#070b18;
+  --bg-1:#0b1224;
+  --bg-2:#0f1629;
+  --bg-3:#151d33;
+  --border:#22304d;
+  --border-soft:#1a2540;
+
+  --text:#e6ecff;
+  --text-soft:#aab5d1;
+  --text-muted:#6b779a;
+
+  --gold:#f5a623;
+  --gold-light:#fbbf24;
+  --gold-dark:#b97614;
+
+  --cyan:#22d3ee;
+  --cyan-dark:#0891b2;
+
+  --green:#22c55e;
+  --green-dark:#15803d;
+
+  --red:#f43f5e;
+  --red-dark:#9f1239;
+
+  --blue:#3b82f6;
+  --purple:#a855f7;
+
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:18px;
+  --radius-xl:24px;
+
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+  --shadow-glow:0 0 0 3px rgba(245,166,35,.15);
+  --transition:.2s ease;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,.10), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(245,166,35,.08), transparent 55%),
+    var(--bg-0);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px 18px 60px;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+button{font-family:inherit;cursor:pointer;}
+input,select,button{font-family:inherit;}
+
+.container{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+.header-top{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:18px 22px;
+  background:linear-gradient(135deg, rgba(21,29,51,.95), rgba(11,18,36,.95));
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+  gap:16px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand-logo{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  display:grid;place-items:center;color:#0b1224;
+  box-shadow:0 6px 20px rgba(245,166,35,.35);
+}
+.brand-text h1{margin:0;font-size:16px;font-weight:800;letter-spacing:.3px;color:#fff;}
+.brand-text p{margin:2px 0 0;font-size:11px;color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;}
+
+.header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+
+.clock-card{
+  background:var(--bg-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px 16px;min-width:150px;
+  text-align:right;
+}
+.clock-display{
+  font-size:20px;font-weight:800;color:var(--gold-light);
+  font-variant-numeric:tabular-nums;letter-spacing:1px;
+  font-family:'JetBrains Mono',monospace;
+}
+.date-display{font-size:11px;color:var(--text-muted);text-transform:capitalize;margin-top:2px;}
+
+.header-tools{display:flex;gap:8px;}
+.icon-btn{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--bg-2);border:1px solid var(--border);
+  color:var(--text-soft);display:grid;place-items:center;
+  transition:var(--transition);
+}
+.icon-btn:hover{color:var(--gold-light);border-color:rgba(245,166,35,.45);transform:translateY(-1px);}
+.icon-btn.off{color:var(--text-muted);opacity:.6;}
+
+/* =========================================================
+   STATS
+   ========================================================= */
+.stats-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;
+}
+.stat-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(160deg,var(--bg-2),var(--bg-1));
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:18px 18px 16px;
+  transition:var(--transition);
+}
+.stat-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--accent,var(--gold));
+}
+.stat-card:hover{transform:translateY(-3px);border-color:var(--accent,var(--gold));box-shadow:0 14px 30px rgba(0,0,0,.5);}
+
+.stat-card.patio    {--accent:var(--gold-light);}
+.stat-card.pedestres{--accent:var(--cyan);}
+.stat-card.entradas {--accent:var(--green);}
+.stat-card.saidas   {--accent:var(--red);}
+.stat-card.total    {--accent:var(--purple);}
+
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+.stat-icon-wrap{
+  width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+  background:rgba(255,255,255,.05);color:var(--accent,var(--gold));
+}
+.stat-value{font-size:32px;font-weight:800;color:#fff;line-height:1;font-variant-numeric:tabular-nums;}
+.stat-desc{font-size:11px;color:var(--text-muted);margin-top:6px;}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+.tab-navigation{
+  display:flex;gap:8px;background:var(--bg-2);
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:8px;flex-wrap:wrap;
+}
+.tab-btn{
+  flex:1;min-width:180px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:12px 16px;border-radius:var(--radius);
+  background:transparent;border:1px solid transparent;
+  color:var(--text-soft);font-weight:600;font-size:13px;
+  transition:var(--transition);
+}
+.tab-btn:hover{background:var(--bg-3);color:#fff;}
+.tab-btn.active{
+  background:linear-gradient(135deg,rgba(245,166,35,.18),rgba(245,166,35,.05));
+  color:var(--gold-light);border-color:rgba(245,166,35,.35);
+  box-shadow:inset 0 0 0 1px rgba(245,166,35,.15);
+}
+.tab-count-badge{
+  background:var(--gold);color:#0b1224;font-size:10px;font-weight:800;
+  padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;
+}
+
+/* =========================================================
+   VIP CARD (containers principais)
+   ========================================================= */
+.vip-card{
+  background:linear-gradient(180deg,var(--bg-2),var(--bg-1));
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:22px;
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:18px;
+}
+
+.section-header{display:flex;align-items:center;gap:12px;}
+.section-number{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(245,166,35,.15);color:var(--gold-light);
+  border:1px solid rgba(245,166,35,.35);
+  display:grid;place-items:center;font-weight:800;font-size:13px;
+  flex-shrink:0;
+}
+.section-title-text{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#fff;}
+
+/* =========================================================
+   MOVIMENTO (Entrada / Saída)
+   ========================================================= */
+.movement-selector{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mov-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:16px;border-radius:var(--radius);
+  background:var(--bg-3);border:2px solid var(--border);
+  color:var(--text-soft);font-weight:700;font-size:13px;letter-spacing:.6px;
+  transition:var(--transition);
+}
+.mov-btn:hover{transform:translateY(-2px);}
+.mov-btn.entrada.active{
+  background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(34,197,94,.05));
+  border-color:var(--green);color:#86efac;
+  box-shadow:0 0 0 3px rgba(34,197,94,.15);
+}
+.mov-btn.saida.active{
+  background:linear-gradient(135deg,rgba(244,63,94,.22),rgba(244,63,94,.05));
+  border-color:var(--red);color:#fda4af;
+  box-shadow:0 0 0 3px rgba(244,63,94,.15);
+}
+
+/* =========================================================
+   TIPO DE VEÍCULO
+   ========================================================= */
+.vehicle-selector{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;
+}
+.veh-btn{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:18px 12px;border-radius:var(--radius);
+  background:var(--bg-3);border:2px solid var(--border);
+  color:var(--text-soft);font-weight:600;font-size:12px;
+  transition:var(--transition);
+}
+.veh-btn:hover{transform:translateY(-2px);color:#fff;border-color:var(--border-soft);}
+.veh-btn.active{
+  background:linear-gradient(160deg,rgba(245,166,35,.20),rgba(245,166,35,.04));
+  border-color:var(--gold);color:var(--gold-light);
+  box-shadow:0 0 0 3px rgba(245,166,35,.15);
+}
+.veh-btn.pedestre.active{
+  background:linear-gradient(160deg,rgba(34,211,238,.20),rgba(34,211,238,.04));
+  border-color:var(--cyan);color:#67e8f9;
+  box-shadow:0 0 0 3px rgba(34,211,238,.15);
+}
+
+/* =========================================================
+   AVISO PEDESTRE
+   ========================================================= */
+.pedestrian-notice{
+  display:none;gap:14px;align-items:flex-start;
+  padding:14px 16px;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(34,211,238,.03));
+  border:1px solid rgba(34,211,238,.35);
+}
+.pedestrian-notice.show{display:flex;}
+.pedestrian-notice-icon{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  background:rgba(34,211,238,.18);color:var(--cyan);
+  display:grid;place-items:center;
+}
+
+/* =========================================================
+   CÂMERA HERO
+   ========================================================= */
+.camera-hero{
+  display:flex;align-items:center;gap:16px;
+  padding:18px 20px;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(59,130,246,.14),rgba(168,85,247,.10));
+  border:1px dashed rgba(96,165,250,.45);
+  transition:var(--transition);cursor:pointer;
+}
+.camera-hero:hover{
+  border-color:var(--blue);
+  background:linear-gradient(135deg,rgba(59,130,246,.22),rgba(168,85,247,.16));
+  transform:translateY(-2px);
+}
+.camera-icon-circle{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:grid;place-items:center;color:#fff;
+  box-shadow:0 8px 20px rgba(59,130,246,.35);
+}
+.camera-hero-text{flex:1;display:flex;flex-direction:column;gap:2px;}
+.camera-hero-text strong{color:#fff;font-size:14px;}
+.camera-hero-text span{color:var(--text-muted);font-size:12px;}
+.camera-hero-arrow{color:var(--text-soft);}
+
+/* =========================================================
+   PREVIEW FOTO
+   ========================================================= */
+.photo-preview-box{
+  display:none;align-items:center;gap:14px;
+  padding:12px;border-radius:var(--radius);
+  background:var(--bg-3);border:1px solid var(--border);
+}
+.photo-preview-box.show{display:flex;}
+.photo-preview-img{
+  width:72px;height:72px;object-fit:cover;border-radius:10px;
+  border:1px solid var(--border);
+}
+
+/* =========================================================
+   PLACA MERCOSUL
+   ========================================================= */
+.plate-card-wrapper{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.plate-box{
+  width:100%;max-width:380px;
+  background:var(--bg-3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:16px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.mercosul-plate{
+  background:#fff;border-radius:10px;overflow:hidden;
+  border:3px solid #0b1224;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.mercosul-plate.cinza{
+  background:#e5e7eb;
+}
+.mercosul-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 8px;background:#009B3A;color:#fff;
+}
+.mercosul-plate.cinza .mercosul-header{background:#334155;}
+.mercosul-header-flags{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:800;letter-spacing:1px;}
+.plate-input-area{padding:8px 10px;}
+.plate-input{
+  width:100%;border:none;outline:none;background:transparent;
+  font-family:'JetBrains Mono',monospace;
+  font-size:32px;font-weight:800;letter-spacing:6px;
+  text-align:center;color:#0b1224;text-transform:uppercase;
+  padding:6px 0;
+}
+.plate-input::placeholder{color:#94a3b8;letter-spacing:4px;}
+
+.plate-style-switch{
+  display:flex;gap:8px;justify-content:center;
+}
+.plate-toggle-btn{
+  padding:6px 14px;border-radius:20px;
+  background:var(--bg-2);border:1px solid var(--border);
+  color:var(--text-soft);font-size:11px;font-weight:700;
+  transition:var(--transition);
+}
+.plate-toggle-btn.active{
+  background:var(--gold);color:#0b1224;border-color:var(--gold);
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:720px){.input-grid{grid-template-columns:1fr;}}
+
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-soft);
+}
+.label-hint{font-size:10px;color:var(--gold-light);font-weight:600;text-transform:none;letter-spacing:0;}
+
+.input-with-icon{
+  position:relative;display:flex;align-items:center;
+}
+.input-with-icon > svg{
+  position:absolute;left:12px;color:var(--text-muted);pointer-events:none;
+}
+.input-with-icon .form-input{padding-left:40px;}
+
+.form-input{
+  width:100%;padding:12px 14px;
+  background:var(--bg-3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-size:13px;
+  transition:var(--transition);outline:none;
+}
+.form-input:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(245,166,35,.18);
+  background:var(--bg-2);
+}
+.form-input::placeholder{color:var(--text-muted);}
+
+.cpf-status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.cpf-status-badge.ok{background:rgba(34,197,94,.18);color:#86efac;}
+.cpf-status-badge.err{background:rgba(244,63,94,.18);color:#fda4af;}
+
+/* Chips */
+.chips-wrapper{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chip-btn{
+  padding:6px 12px;border-radius:20px;
+  background:var(--bg-3);border:1px solid var(--border);
+  color:var(--text-soft);font-size:11px;font-weight:600;
+  transition:var(--transition);
+}
+.chip-btn:hover{
+  background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.4);
+  color:var(--gold-light);
+}
+
+/* Botões principais */
+.form-actions-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+@media(max-width:720px){.form-actions-grid{grid-template-columns:1fr;}}
+
+.btn-save-record,.btn-save-and-ticket{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:16px;border-radius:var(--radius);border:none;
+  font-weight:800;font-size:13px;letter-spacing:.6px;
+  transition:var(--transition);
+}
+.btn-save-record{
+  background:linear-gradient(135deg,var(--green),var(--green-dark));
+  color:#fff;box-shadow:0 10px 24px rgba(34,197,94,.30);
+}
+.btn-save-record:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(34,197,94,.42);}
+
+.btn-save-and-ticket{
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  color:#0b1224;box-shadow:0 10px 24px rgba(245,166,35,.30);
+}
+.btn-save-and-ticket:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(245,166,35,.42);}
+
+/* =========================================================
+   TABELA
+   ========================================================= */
+.table-controls{display:flex;flex-direction:column;gap:12px;}
+.filter-group{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.select-filter{
+  padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--bg-3);border:1px solid var(--border);
+  color:var(--text);font-size:12px;font-weight:600;outline:none;
+}
+.select-filter:focus{border-color:var(--gold);}
+
+.action-buttons-bar{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-action{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 16px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--bg-3);
+  color:var(--text-soft);font-weight:700;font-size:12px;
+  transition:var(--transition);
+}
+.btn-action:hover{transform:translateY(-1px);color:#fff;}
+.btn-print:hover{border-color:var(--purple);color:#c4b5fd;background:rgba(168,85,247,.14);}
+.btn-export-excel:hover{border-color:var(--green);color:#86efac;background:rgba(34,197,94,.14);}
+
+.spreadsheet-wrapper{
+  overflow-x:auto;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--bg-1);
+}
+.spreadsheet{
+  width:100%;border-collapse:collapse;font-size:12px;min-width:900px;
+}
+.spreadsheet thead{
+  background:var(--bg-3);
+}
+.spreadsheet th{
+  text-align:left;padding:12px 10px;
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:1px;color:var(--text-muted);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.spreadsheet td{
+  padding:10px;border-bottom:1px solid var(--border-soft);
+  color:var(--text-soft);vertical-align:middle;
+}
+.spreadsheet tbody tr:hover{background:rgba(245,166,35,.04);}
+.spreadsheet tbody tr:last-child td{border-bottom:none;}
+
+.badge{
+  display:inline-block;padding:3px 8px;border-radius:20px;
+  font-size:10px;font-weight:800;letter-spacing:.4px;
+}
+.badge.tipo-Carro   {background:rgba(245,166,35,.18);color:#fcd34d;}
+.badge.tipo-Moto    {background:rgba(168,85,247,.18);color:#d8b4fe;}
+.badge.tipo-Caminhão{background:rgba(59,130,246,.18);color:#93c5fd;}
+.badge.tipo-Pedestre{background:rgba(34,211,238,.18);color:#67e8f9;}
+.badge.mov-Entrada  {background:rgba(34,197,94,.18);color:#86efac;}
+.badge.mov-Saída    {background:rgba(244,63,94,.18);color:#fda4af;}
+
+.row-plate{
+  font-family:'JetBrains Mono',monospace;font-weight:800;color:#fff;
+  letter-spacing:1px;font-size:13px;
+}
+.row-name{color:#fff;font-weight:600;}
+
+.thumb{
+  width:42px;height:42px;object-fit:cover;border-radius:8px;
+  border:1px solid var(--border);cursor:pointer;
+}
+.thumb-empty{
+  width:42px;height:42px;border-radius:8px;display:grid;place-items:center;
+  background:var(--bg-3);border:1px dashed var(--border);
+  color:var(--text-muted);font-size:10px;
+}
+
+.row-actions{display:flex;gap:6px;justify-content:center;}
+.row-actions .icon-btn{width:30px;height:30px;border-radius:6px;}
+.row-actions .danger:hover{color:#fda4af;border-color:rgba(244,63,94,.5);}
+
+.empty-row td{
+  text-align:center;padding:40px 10px;
+  color:var(--text-muted);font-style:italic;
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+#toastWrap{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;pointer-events:none;
+}
+.toast{
+  min-width:240px;max-width:380px;
+  padding:14px 18px;border-radius:12px;
+  background:var(--bg-2);border:1px solid var(--border);
+  color:var(--text);font-size:13px;font-weight:600;
+  box-shadow:0 12px 30px rgba(0,0,0,.55);
+  animation:slideIn .3s ease;
+  pointer-events:auto;
+  border-left:4px solid var(--gold);
+}
+.toast.success{border-left-color:var(--green);}
+.toast.error  {border-left-color:var(--red);}
+.toast.info   {border-left-color:var(--cyan);}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* =========================================================
+   MODAL BACKUP
+   ========================================================= */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(3,7,18,.75);backdrop-filter:blur(4px);
+  place-items:center;padding:20px;
+}
+.modal-overlay.show{display:grid;}
+.modal-box{
+  width:100%;max-width:460px;background:linear-gradient(180deg,var(--bg-2),var(--bg-1));
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:24px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:16px;
+}
+.modal-box h3{margin:0;color:#fff;font-size:16px;}
+.modal-box p{margin:0;font-size:12px;color:var(--text-muted);line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ============================ HEADER ============================ -->
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Portaria Inteligente</h1>
+        <p>Controle de Acesso</p>
+      </div>
     </div>
 
-    <div class="header-tools">
-      <button class="icon-btn" id="btnAudioToggle" onclick="toggleAudio()" title="Ativar/Desativar Sons" aria-label="Ativar ou desativar sons">
-        <svg id="audioIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-        </svg>
-      </button>
-      <button class="icon-btn" onclick="openBackupModal()" title="Backup & Configurações" aria-label="Abrir backup e configurações">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
-      </button>
+    <div class="header-right">
+      <div class="clock-card">
+        <div class="clock-display" id="clockTime">--:--:--</div>
+        <div class="date-display" id="clockDate">Hoje</div>
+      </div>
+
+      <div class="header-tools">
+        <button type="button" class="icon-btn" id="btnAudioToggle" onclick="toggleAudio()" title="Ativar/Desativar Sons" aria-label="Ativar ou desativar sons">
+          <svg id="audioIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn" onclick="openBackupModal()" title="Backup & Configurações" aria-label="Abrir backup e configurações">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
+  <!-- ============================ STATS ============================ -->
   <div class="stats-grid">
     <div class="stat-card patio">
       <div class="stat-top">
         <span class="stat-label">Veículos no Pátio</span>
         <div class="stat-icon-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
             <path d="M9 16V8h4a2 2 0 0 1 0 4H9"/>
           </svg>
@@ -42,7 +611,7 @@
       <div class="stat-top">
         <span class="stat-label">Pedestres no Local</span>
         <div class="stat-icon-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
@@ -56,7 +625,7 @@
       <div class="stat-top">
         <span class="stat-label">Entradas Hoje</span>
         <div class="stat-icon-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="19" x2="12" y2="5"/>
             <polyline points="5 12 12 5 19 12"/>
           </svg>
@@ -70,7 +639,7 @@
       <div class="stat-top">
         <span class="stat-label">Saídas Hoje</span>
         <div class="stat-icon-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <polyline points="19 12 12 19 5 12"/>
           </svg>
@@ -84,7 +653,7 @@
       <div class="stat-top">
         <span class="stat-label">Total Registros</span>
         <div class="stat-icon-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="20" x2="18" y2="10"/>
             <line x1="12" y1="20" x2="12" y2="4"/>
             <line x1="6" y1="20" x2="6" y2="14"/>
@@ -96,9 +665,10 @@
     </div>
   </div>
 
-  <div class="tab-navigation">
-    <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <!-- ============================ TABS ============================ -->
+  <div class="tab-navigation" role="tablist">
+    <button type="button" class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')" role="tab" aria-selected="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="16"/>
         <line x1="8" y1="12" x2="16" y2="12"/>
@@ -106,19 +676,18 @@
       <span>Novo Registro</span>
     </button>
 
-    <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <button type="button" class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')" role="tab" aria-selected="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
         <line x1="16" y1="13" x2="8" y2="13"/>
         <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
       </svg>
       <span>Planilha & Histórico</span>
     </button>
 
-    <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <button type="button" class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')" role="tab" aria-selected="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
         <circle cx="12" cy="10" r="3"/>
       </svg>
@@ -126,372 +695,944 @@
     </button>
   </div>
 
-</div>
+  <!-- ============================ TAB REGISTRO ============================ -->
+  <div id="tabContentRegistro">
+    <div class="vip-card">
 
-<div id="tabContentRegistro">
-  <div class="vip-card">
-
-    <div class="section-header">
-      <div class="section-number">01</div>
-      <div class="section-title-text">Tipo de Movimentação</div>
-    </div>
-    <div class="movement-selector">
-      <button type="button" class="mov-btn entrada active" id="btnEntrada" onclick="setMovement('Entrada')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10 17 15 12 10 7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
-        </svg>
-        <span>ENTRADA AUTORIZADA</span>
-      </button>
-      <button type="button" class="mov-btn saida" id="btnSaida" onclick="setMovement('Saída')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        <span>SAÍDA REGISTRADA</span>
-      </button>
-    </div>
-
-    <div class="section-header">
-      <div class="section-number">02</div>
-      <div class="section-title-text">Categoria de Acesso</div>
-    </div>
-    <div class="vehicle-selector">
-      <button type="button" class="veh-btn active" data-type="Carro" onclick="setAccessType('Carro')">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
-          <circle cx="7" cy="17" r="2"/>
-          <path d="M9 17h6"/>
-          <circle cx="17" cy="17" r="2"/>
-        </svg>
-        <span>Automóvel / Carro</span>
-      </button>
-
-      <button type="button" class="veh-btn" data-type="Moto" onclick="setAccessType('Moto')">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="18.5" cy="17.5" r="3.5"/>
-          <circle cx="5.5" cy="17.5" r="3.5"/>
-          <circle cx="15" cy="5" r="1"/>
-          <path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
-        </svg>
-        <span>Motocicleta</span>
-      </button>
-
-      <button type="button" class="veh-btn" data-type="Caminhão" onclick="setAccessType('Caminhão')">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="1" y="3" width="15" height="13"/>
-          <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
-          <circle cx="5.5" cy="18.5" r="2.5"/>
-          <circle cx="18.5" cy="18.5" r="2.5"/>
-        </svg>
-        <span>Caminhão / Carga</span>
-      </button>
-
-      <button type="button" class="veh-btn pedestre" data-type="Pedestre" onclick="setAccessType('Pedestre')">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="5" r="2"/>
-          <path d="m9 20 3-6 3 6"/>
-          <path d="m6 8 6 2 6-2"/>
-          <path d="M12 10v4"/>
-        </svg>
-        <span>Pedestre / A pé</span>
-      </button>
-    </div>
-
-    <div class="pedestrian-notice" id="pedestrianNotice">
-      <div class="pedestrian-notice-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <polyline points="16 11 18 13 22 9"/>
-        </svg>
+      <div class="section-header">
+        <div class="section-number">01</div>
+        <div class="section-title-text">Tipo de Movimentação</div>
       </div>
-      <div>
-        <strong style="color: #22d3ee; font-size: 14px;">Modo de Controle de Pedestre Ativo</strong>
-        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-          Placa não necessária. Cadastre o <strong>Nome Completo</strong> e o <strong>CPF / Documento</strong> para autorização de entrada.
-        </p>
+      <div class="movement-selector">
+        <button type="button" class="mov-btn entrada active" id="btnEntrada" onclick="setMovement('Entrada')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          <span>ENTRADA AUTORIZADA</span>
+        </button>
+        <button type="button" class="mov-btn saida" id="btnSaida" onclick="setMovement('Saída')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span>SAÍDA REGISTRADA</span>
+        </button>
       </div>
-    </div>
 
-    <div class="section-header">
-      <div class="section-number">03</div>
-      <div class="section-title-text">Captura & Leitura Inteligente</div>
-    </div>
-
-    <!-- Input de captura nativo (ÚNICA câmera) -->
-    <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleNativeImage(this)">
-
-    <!-- Único botão de captura -->
-    <div class="camera-hero" onclick="document.getElementById('nativeCameraInput').click()">
-      <div class="camera-icon-circle">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
+      <div class="section-header">
+        <div class="section-number">02</div>
+        <div class="section-title-text">Categoria de Acesso</div>
       </div>
-      <div class="camera-hero-text">
-        <strong id="cameraHeroTitle">Fotografar Placa / Documento</strong>
-        <span id="cameraHeroSub">Toque para abrir a câmera e ler a placa automaticamente</span>
-      </div>
-      <div class="camera-hero-arrow">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </div>
-    </div>
+      <div class="vehicle-selector">
+        <button type="button" class="veh-btn active" data-type="Carro" onclick="setAccessType('Carro')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <path d="M9 17h6"/>
+            <circle cx="17" cy="17" r="2"/>
+          </svg>
+          <span>Automóvel / Carro</span>
+        </button>
 
-    <div class="photo-preview-box" id="photoPreviewBox">
-      <img src="" id="photoPreviewImg" class="photo-preview-img" alt="Captura">
-      <div style="flex: 1;">
-        <strong style="font-size: 13px; color: #fff;" id="photoStatusTitle">Foto Anexada</strong>
-        <div id="photoStatusText" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Processando reconhecimento...</div>
-      </div>
-      <button type="button" onclick="removeAttachedPhoto()" class="icon-btn" style="border-color: rgba(244,63,94,0.4); color: #fb7185;" title="Remover Foto" aria-label="Remover foto">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
+        <button type="button" class="veh-btn" data-type="Moto" onclick="setAccessType('Moto')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18.5" cy="17.5" r="3.5"/>
+            <circle cx="5.5" cy="17.5" r="3.5"/>
+            <circle cx="15" cy="5" r="1"/>
+            <path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
+          </svg>
+          <span>Motocicleta</span>
+        </button>
 
-    <div class="plate-card-wrapper" id="plateCardWrapper">
-      <div class="plate-box">
-        <div class="mercosul-plate" id="plateDisplayBox">
-          <div class="mercosul-header" id="plateDisplayHeader">
-            <div class="mercosul-header-flags" id="plateFlagsWrap">
-              <svg width="16" height="11" viewBox="0 0 20 14" fill="none">
-                <rect width="20" height="14" fill="#009B3A"/>
-                <polygon points="10,1.5 18.5,7 10,12.5 1.5,7" fill="#FEDF00"/>
-                <circle cx="10" cy="7" r="3.2" fill="#002776"/>
-              </svg>
-              <span id="plateHeaderCountry">BRASIL</span>
+        <button type="button" class="veh-btn" data-type="Caminhão" onclick="setAccessType('Caminhão')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13"/>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/>
+            <circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          <span>Caminhão / Carga</span>
+        </button>
+
+        <button type="button" class="veh-btn pedestre" data-type="Pedestre" onclick="setAccessType('Pedestre')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2"/>
+            <path d="m9 20 3-6 3 6"/>
+            <path d="m6 8 6 2 6-2"/>
+            <path d="M12 10v4"/>
+          </svg>
+          <span>Pedestre / A pé</span>
+        </button>
+      </div>
+
+      <div class="pedestrian-notice" id="pedestrianNotice">
+        <div class="pedestrian-notice-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <polyline points="16 11 18 13 22 9"/>
+          </svg>
+        </div>
+        <div>
+          <strong style="color: var(--cyan); font-size: 14px;">Modo de Controle de Pedestre Ativo</strong>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            Placa não necessária. Cadastre o <strong>Nome Completo</strong> e o <strong>CPF / Documento</strong> para autorização de entrada.
+          </p>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-number">03</div>
+        <div class="section-title-text">Captura & Leitura Inteligente</div>
+      </div>
+
+      <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleNativeImage(this)">
+
+      <div class="camera-hero" onclick="document.getElementById('nativeCameraInput').click()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('nativeCameraInput').click();}">
+        <div class="camera-icon-circle">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <div class="camera-hero-text">
+          <strong id="cameraHeroTitle">Fotografar Placa / Documento</strong>
+          <span id="cameraHeroSub">Toque para abrir a câmera e ler a placa automaticamente</span>
+        </div>
+        <div class="camera-hero-arrow">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="photo-preview-box" id="photoPreviewBox">
+        <img src="" id="photoPreviewImg" class="photo-preview-img" alt="Captura">
+        <div style="flex: 1;">
+          <strong style="font-size: 13px; color: #fff;" id="photoStatusTitle">Foto Anexada</strong>
+          <div id="photoStatusText" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Processando reconhecimento...</div>
+        </div>
+        <button type="button" onclick="removeAttachedPhoto()" class="icon-btn" style="border-color: rgba(244,63,94,0.4); color: #fb7185;" title="Remover Foto" aria-label="Remover foto">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="plate-card-wrapper" id="plateCardWrapper">
+        <div class="plate-box">
+          <div class="mercosul-plate" id="plateDisplayBox">
+            <div class="mercosul-header" id="plateDisplayHeader">
+              <div class="mercosul-header-flags" id="plateFlagsWrap">
+                <svg width="16" height="11" viewBox="0 0 20 14" fill="none">
+                  <rect width="20" height="14" fill="#009B3A"/>
+                  <polygon points="10,1.5 18.5,7 10,12.5 1.5,7" fill="#FEDF00"/>
+                  <circle cx="10" cy="7" r="3.2" fill="#002776"/>
+                </svg>
+                <span id="plateHeaderCountry">BRASIL</span>
+              </div>
+              <span id="plateHeaderSub" style="font-size: 8px; opacity: 0.9; letter-spacing: 1px;">MERCOSUL</span>
             </div>
-            <span id="plateHeaderSub" style="font-size: 8px; opacity: 0.9; letter-spacing: 1px;">MERCOSUL</span>
+            <div class="plate-input-area">
+              <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="7" oninput="formatPlateInput(this)" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Placa do veículo">
+            </div>
           </div>
-          <div class="plate-input-area">
-            <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="7" oninput="formatPlateInput(this)" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <div class="plate-style-switch">
+            <button type="button" class="plate-toggle-btn active" id="btnPlateMercosul" onclick="setPlateStyle('mercosul')">Mercosul</button>
+            <button type="button" class="plate-toggle-btn" id="btnPlateCinza" onclick="setPlateStyle('cinza')">Padrão Cinza</button>
+          </div>
+          <div id="ocrStatus" style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-align: center;">
+            Capture a foto para leitura automática por OCR ou digite a placa acima
           </div>
         </div>
-        <div class="plate-style-switch">
-          <button type="button" class="plate-toggle-btn active" id="btnPlateMercosul" onclick="setPlateStyle('mercosul')">Mercosul</button>
-          <button type="button" class="plate-toggle-btn" id="btnPlateCinza" onclick="setPlateStyle('cinza')">Padrão Cinza</button>
+      </div>
+
+      <div class="section-header">
+        <div class="section-number">04</div>
+        <div class="section-title-text">Identificação & Destino</div>
+      </div>
+
+      <div class="input-grid">
+        <div class="form-group">
+          <label id="labelPersonName">
+            <span>Nome do Condutor / Motorista</span>
+            <span class="label-hint">Obrigatório</span>
+          </label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input type="text" id="inputPersonName" class="form-input" placeholder="Ex: Roberto Carlos Pereira" autocomplete="off">
+          </div>
         </div>
-        <div id="ocrStatus" style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-align: center;">
-          Capture a foto para leitura automática por OCR ou digite a placa acima
+
+        <div class="form-group">
+          <label>
+            <span>CPF (Documento)</span>
+            <span id="cpfValidationBadge" class="cpf-status-badge" aria-live="polite"></span>
+          </label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <line x1="7" y1="8" x2="17" y2="8"/>
+              <line x1="7" y1="12" x2="11" y2="12"/>
+              <line x1="7" y1="16" x2="14" y2="16"/>
+            </svg>
+            <input type="text" id="inputCpf" class="form-input" placeholder="000.000.000-00" maxlength="14" oninput="handleCpfInput(this)" inputmode="numeric" autocomplete="off">
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="section-header">
-      <div class="section-number">04</div>
-      <div class="section-title-text">Identificação & Destino</div>
-    </div>
+      <div class="input-grid">
+        <div class="form-group">
+          <label>Destino / Apto / Bloco / Unidade</label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 302 - Bloco B" autocomplete="off">
+          </div>
+          <div class="chips-wrapper">
+            <button type="button" class="chip-btn" onclick="fillDestination('Bloco A')">🏢 Bloco A</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Bloco B')">🏢 Bloco B</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('iFood / Delivery')">🍔 Delivery</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Mercado Livre')">📦 Entrega</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Prestador de Serviço')">🔧 Prestador</button>
+            <button type="button" class="chip-btn" onclick="fillDestination('Administração')">💼 Adm</button>
+          </div>
+        </div>
 
-    <div class="input-grid">
-      <div class="form-group">
-        <label id="labelPersonName">
-          <span>Nome do Condutor / Motorista</span>
-          <span class="label-hint">Obrigatório</span>
-        </label>
-        <div class="input-with-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
+        <div class="form-group">
+          <label>Observações / Crachá / Carga</label>
+          <div class="input-with-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <input type="text" id="inputNotes" class="form-input" placeholder="Ex: Crachá #42 / Autorizado pelo morador" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions-grid">
+        <button type="button" class="btn-save-record" onclick="saveRecord(false)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
           </svg>
-          <input type="text" id="inputPersonName" class="form-input" placeholder="Ex: Roberto Carlos Pereira" autocomplete="off">
-        </div>
-      </div>
+          <span>REGISTRAR E SALVAR NA PLANILHA</span>
+        </button>
 
-      <div class="form-group">
-        <label>
-          <span>CPF (Documento)</span>
-          <span id="cpfValidationBadge" class="cpf-status-badge"></span>
-        </label>
-        <div class="input-with-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="16" rx="2"/>
-            <line x1="7" y1="8" x2="17" y2="8"/>
-            <line x1="7" y1="12" x2="11" y2="12"/>
-            <line x1="7" y1="16" x2="14" y2="16"/>
-          </svg>
-          <input type="text" id="inputCpf" class="form-input" placeholder="000.000.000-00" maxlength="14" oninput="handleCpfInput(this)" inputmode="numeric" autocomplete="off">
-        </div>
-      </div>
-    </div>
-
-    <div class="input-grid">
-      <div class="form-group">
-        <label>Destino / Apto / Bloco / Unidade</label>
-        <div class="input-with-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-          <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 302 - Bloco B" autocomplete="off">
-        </div>
-        <div class="chips-wrapper">
-          <button type="button" class="chip-btn" onclick="fillDestination('Bloco A')">🏢 Bloco A</button>
-          <button type="button" class="chip-btn" onclick="fillDestination('Bloco B')">🏢 Bloco B</button>
-          <button type="button" class="chip-btn" onclick="fillDestination('iFood / Delivery')">🍔 Delivery</button>
-          <button type="button" class="chip-btn" onclick="fillDestination('Mercado Livre')">📦 Entrega</button>
-          <button type="button" class="chip-btn" onclick="fillDestination('Prestador de Serviço')">🔧 Prestador</button>
-          <button type="button" class="chip-btn" onclick="fillDestination('Administração')">💼 Adm</button>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Observações / Crachá / Carga</label>
-        <div class="input-with-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <input type="text" id="inputNotes" class="form-input" placeholder="Ex: Crachá #42 / Autorizado pelo morador" autocomplete="off">
-        </div>
-      </div>
-    </div>
-
-    <div class="form-actions-grid">
-      <button type="button" class="btn-save-record" onclick="saveRecord(false)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
-        <span>REGISTRAR E SALVAR NA PLANILHA</span>
-      </button>
-
-      <button type="button" class="btn-save-and-ticket" onclick="saveRecord(true)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 9V2h12v7"/>
-          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-          <path d="M6 14h12v8H6z"/>
-        </svg>
-        <span>Salvar & Emitir Ticket</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<div id="tabContentPlanilha" style="display: none;">
-  <div class="vip-card">
-
-    <div class="table-controls">
-      <div class="filter-group">
-        <div class="input-with-icon" style="flex: 2; min-width: 240px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="searchTable" class="form-input" placeholder="Buscar por placa, nome, CPF, destino..." oninput="renderTable()" autocomplete="off">
-        </div>
-
-        <select id="filterType" class="select-filter" onchange="renderTable()">
-          <option value="ALL">Todos os Tipos</option>
-          <option value="Pedestre">🚶 Pedestres</option>
-          <option value="Carro">🚗 Automóveis</option>
-          <option value="Moto">🏍️ Motos</option>
-          <option value="Caminhão">🚚 Caminhões</option>
-        </select>
-
-        <select id="filterMovement" class="select-filter" onchange="renderTable()">
-          <option value="ALL">Todas Movimentações</option>
-          <option value="Entrada">🟢 Apenas Entradas</option>
-          <option value="Saída">🔴 Apenas Saídas</option>
-        </select>
-      </div>
-
-      <div class="action-buttons-bar">
-        <button class="btn-action btn-print" onclick="printSpreadsheet()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 6 2 18 2 18 9"/>
+        <button type="button" class="btn-save-and-ticket" onclick="saveRecord(true)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V2h12v7"/>
             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-            <rect x="6" y="14" width="12" height="8"/>
+            <path d="M6 14h12v8H6z"/>
           </svg>
-          <span>Imprimir</span>
-        </button>
-        <button class="btn-action btn-export-excel" onclick="exportToCSV()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span>Exportar Excel / CSV</span>
+          <span>Salvar & Emitir Ticket</span>
         </button>
       </div>
     </div>
-
-    <div class="spreadsheet-wrapper">
-      <table class="spreadsheet">
-        <thead>
-          <tr>
-            <th style="width: 110px;">Horário</th>
-            <th style="width: 55px; text-align: center;">Foto</th>
-            <th>Identificação / Placa</th>
-            <th>Tipo</th>
-            <th>Movimento</th>
-            <th>Nome / Condutor</th>
-            <th>CPF</th>
-            <th>Destino</th>
-            <th>Obs</th>
-            <th style="text-align: center; width: 140px;">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="spreadsheetBody"></tbody>
-      </table>
-    </div>
-
   </div>
-</div>
 
-<div id="tabContentPatio" style="display: none;">
-  <div class="vip-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-      <div class="section-header" style="margin-bottom: 0;">
-        <div class="section-number" style="background: rgba(245, 158, 11, 0.2); color: var(--gold-light); border-color: rgba(245, 158, 11, 0.4);">
-          📍
+  <!-- ============================ TAB PLANILHA ============================ -->
+  <div id="tabContentPlanilha" style="display: none;">
+    <div class="vip-card">
+      <div class="table-controls">
+        <div class="filter-group">
+          <div class="input-with-icon" style="flex: 2; min-width: 240px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchTable" class="form-input" placeholder="Buscar por placa, nome, CPF, destino..." oninput="renderTable()" autocomplete="off">
+          </div>
+
+          <select id="filterType" class="select-filter" onchange="renderTable()">
+            <option value="ALL">Todos os Tipos</option>
+            <option value="Pedestre">🚶 Pedestres</option>
+            <option value="Carro">🚗 Automóveis</option>
+            <option value="Moto">🏍️ Motos</option>
+            <option value="Caminhão">🚚 Caminhões</option>
+          </select>
+
+          <select id="filterMovement" class="select-filter" onchange="renderTable()">
+            <option value="ALL">Todas Movimentações</option>
+            <option value="Entrada">🟢 Apenas Entradas</option>
+            <option value="Saída">🔴 Apenas Saídas</option>
+          </select>
         </div>
-        <div class="section-title-text" style="color: #fff; font-size: 14px;">Controle de Permanência em Tempo Real</div>
+
+        <div class="action-buttons-bar">
+          <button class="btn-action btn-print" onclick="printSpreadsheet()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <span>Imprimir</span>
+          </button>
+          <button class="btn-action btn-export-excel" onclick="exportToCSV()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Exportar Excel / CSV</span>
+          </button>
+        </div>
       </div>
-      <div style="font-size: 13px; color: var(--text-muted); background: #0f1629; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);">
-        Presentes no momento: <strong id="totalPresentesBadge" style="color: var(--gold-light);">0</strong>
+
+      <div class="spreadsheet-wrapper">
+        <table class="spreadsheet">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 110px;">Horário</th>
+              <th scope="col" style="width: 55px; text-align: center;">Foto</th>
+              <th scope="col">Identificação / Placa</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Movimento</th>
+              <th scope="col">Nome / Condutor</th>
+              <th scope="col">CPF</th>
+              <th scope="col">Destino</th>
+              <th scope="col">Obs</th>
+              <th scope="col" style="text-align: center; width: 140px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="spreadsheetBody"></tbody>
+        </table>
       </div>
     </div>
+  </div>
 
-    <div class="spreadsheet-wrapper">
-      <table class="spreadsheet">
-        <thead>
-          <tr>
-            <th>Entrada</th>
-            <th>Identificação / Placa</th>
-            <th>Tipo</th>
-            <th>Nome / Pessoa</th>
-            <th>CPF</th>
-            <th>Destino</th>
-            <th>Permanência</th>
-            <th style="text-align: center; width: 150px;">Ação Imediata</th>
-          </tr>
-        </thead>
-        <tbody id="patioBody"></tbody>
-      </table>
+  <!-- ============================ TAB PÁTIO ============================ -->
+  <div id="tabContentPatio" style="display: none;">
+    <div class="vip-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 12px;">
+        <div class="section-header" style="margin-bottom: 0;">
+          <div class="section-number">📍</div>
+          <div class="section-title-text">Controle de Permanência em Tempo Real</div>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); background: #0f1629; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);">
+          Presentes no momento: <strong id="totalPresentesBadge" style="color: var(--gold-light);">0</strong>
+        </div>
+      </div>
+
+      <div class="spreadsheet-wrapper">
+        <table class="spreadsheet">
+          <thead>
+            <tr>
+              <th scope="col">Entrada</th>
+              <th scope="col">Identificação / Placa</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Nome / Pessoa</th>
+              <th scope="col">CPF</th>
+              <th scope="col">Destino</th>
+              <th scope="col">Permanência</th>
+              <th scope="col" style="text-align: center; width: 150px;">Ação Imediata</th>
+            </tr>
+          </thead>
+          <tbody id="patioBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================ MODAL BACKUP ============================ -->
+<div class="modal-overlay" id="backupModal">
+  <div class="modal-box">
+    <h3>💾 Backup & Configurações</h3>
+    <p>Gerencie os dados do sistema. O backup inclui todos os registros do histórico e do pátio.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <button class="btn-action btn-export-excel" onclick="exportBackupJSON()" style="justify-content: center; padding: 14px;">
+        💾 Fazer Download do Backup (JSON)
+      </button>
+
+      <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="handleRestoreFile(this)">
+      <button class="btn-action btn-print" onclick="document.getElementById('restoreFileInput').click()" style="justify-content: center; padding: 14px;">
+        📂 Restaurar Backup de Arquivo
+      </button>
+
+      <button class="btn-action" onclick="seedDemoData()" style="background: rgba(245, 158, 11, 0.15); color: var(--gold-light); border: 1px solid rgba(245, 158, 11, 0.3); justify-content: center; padding: 12px;">
+        ✨ Carregar Dados de Demonstração
+      </button>
+
+      <button class="btn-action" onclick="clearAllData()" style="background: rgba(244,63,94,0.15); color: #fda4af; border: 1px solid rgba(244,63,94,0.3); justify-content: center; padding: 12px;">
+        🗑️ Apagar Todos os Dados
+      </button>
+
+      <button class="btn-action" onclick="closeBackupModal()" style="justify-content: center; padding: 12px;">
+        Fechar
+      </button>
     </div>
   </div>
 </div>
 
-  <div style="display: flex; flex-direction: column; gap: 12px;">
-    <button class="btn-action btn-export-excel" onclick="exportBackupJSON()" style="justify-content: center; padding: 14px;">
-      💾 Fazer Download do Backup (JSON)
-    </button>
+<!-- ============================ TOASTS ============================ -->
+<div id="toastWrap"></div>
 
-    <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="handleRestoreFile(this)">
-    <button class="btn-action btn-print" onclick="document.getElementById('restoreFileInput').click()" style="justify-content: center; padding: 14px;">
-      📂 Restaurar Backup de Arquivo
-    </button>
+<script>
+/* =========================================================
+   ESTADO
+   ========================================================= */
+const STORAGE_KEY = 'portaria_registros_v1';
+let records = [];
+let currentMovement = 'Entrada';
+let currentType = 'Carro';
+let attachedPhoto = null;
+let audioEnabled = true;
+let currentPlateStyle = 'mercosul';
 
-    <button class="btn-action" onclick="seedDemoData()" style="background: rgba(245, 158, 11, 0.15); color: var(--gold-light); border: 1px solid rgba(245, 158, 11, 0.3); justify-content: center; padding: 12px;">
-      ✨ Carregar Dados de Demonstração
-    </button>
-  </div>
-</div>
+/* =========================================================
+   RELÓGIO
+   ========================================================= */
+function updateClock(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('pt-BR',{
+    weekday:'long', day:'2-digit', month:'long', year:'numeric'
+  });
+}
+setInterval(updateClock,1000);
+updateClock();
+
+/* =========================================================
+   TOASTS
+   ========================================================= */
+function toast(msg, kind='info'){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';},2600);
+  setTimeout(()=>el.remove(),3000);
+}
+
+/* =========================================================
+   SOM (opcional)
+   ========================================================= */
+let audioCtx = null;
+function beep(freq=880, dur=0.12){
+  if(!audioEnabled) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.frequency.value = freq;
+    o.type = 'sine';
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+function toggleAudio(){
+  audioEnabled = !audioEnabled;
+  document.getElementById('btnAudioToggle').classList.toggle('off', !audioEnabled);
+  toast(audioEnabled ? '🔊 Sons ativados' : '🔇 Sons desativados','info');
+}
+
+/* =========================================================
+   ABAS
+   ========================================================= */
+function switchTab(tab){
+  const map = {
+    registro: {content:'tabContentRegistro', btn:'tabBtnRegistro'},
+    planilha: {content:'tabContentPlanilha', btn:'tabBtnPlanilha'},
+    patio:    {content:'tabContentPatio',    btn:'tabBtnPatio'}
+  };
+  Object.values(map).forEach(v=>{
+    document.getElementById(v.content).style.display = 'none';
+    const b = document.getElementById(v.btn);
+    b.classList.remove('active');
+    b.setAttribute('aria-selected','false');
+  });
+  document.getElementById(map[tab].content).style.display = '';
+  const activeBtn = document.getElementById(map[tab].btn);
+  activeBtn.classList.add('active');
+  activeBtn.setAttribute('aria-selected','true');
+
+  if(tab === 'planilha') renderTable();
+  if(tab === 'patio') renderPatio();
+}
+
+/* =========================================================
+   MOVIMENTO E TIPO
+   ========================================================= */
+function setMovement(m){
+  currentMovement = m;
+  document.getElementById('btnEntrada').classList.toggle('active', m === 'Entrada');
+  document.getElementById('btnSaida').classList.toggle('active', m === 'Saída');
+}
+function setAccessType(t){
+  currentType = t;
+  document.querySelectorAll('.veh-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.type === t);
+  });
+  const isPedestre = t === 'Pedestre';
+  document.getElementById('pedestrianNotice').classList.toggle('show', isPedestre);
+  document.getElementById('plateCardWrapper').style.display = isPedestre ? 'none' : '';
+  document.getElementById('cameraHeroTitle').textContent = isPedestre ? 'Fotografar Documento' : 'Fotografar Placa / Documento';
+  document.getElementById('cameraHeroSub').textContent = isPedestre
+    ? 'Toque para abrir a câmera e ler o documento'
+    : 'Toque para abrir a câmera e ler a placa automaticamente';
+}
+
+/* =========================================================
+   PLACA
+   ========================================================= */
+function formatPlateInput(el){
+  let v = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+  el.value = v;
+}
+function setPlateStyle(style){
+  currentPlateStyle = style;
+  const box = document.getElementById('plateDisplayBox');
+  box.classList.toggle('cinza', style === 'cinza');
+  document.getElementById('btnPlateMercosul').classList.toggle('active', style === 'mercosul');
+  document.getElementById('btnPlateCinza').classList.toggle('active', style === 'cinza');
+  document.getElementById('plateHeaderSub').textContent = style === 'mercosul' ? 'MERCOSUL' : 'BRASIL';
+}
+
+/* =========================================================
+   CPF
+   ========================================================= */
+function handleCpfInput(el){
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  v = v.replace(/(\d{3})(\d)/,'$1.$2')
+       .replace(/(\d{3})(\d)/,'$1.$2')
+       .replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+  const badge = document.getElementById('cpfValidationBadge');
+  const digits = v.replace(/\D/g,'');
+  if(digits.length === 0){ badge.textContent=''; badge.className='cpf-status-badge'; return; }
+  if(digits.length === 11){ badge.textContent='✓ OK'; badge.className='cpf-status-badge ok'; }
+  else{ badge.textContent='incompleto'; badge.className='cpf-status-badge err'; }
+}
+
+/* =========================================================
+   FOTO + OCR SIMULADO
+   ========================================================= */
+function handleNativeImage(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    attachedPhoto = e.target.result;
+    document.getElementById('photoPreviewImg').src = attachedPhoto;
+    document.getElementById('photoPreviewBox').classList.add('show');
+    document.getElementById('photoStatusTitle').textContent = 'Foto Anexada';
+    document.getElementById('photoStatusText').textContent = 'Processando reconhecimento...';
+    beep(660,0.08);
+
+    // OCR simulado: gera uma placa aleatória válida
+    setTimeout(()=>{
+      const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const L = ()=>letras[Math.floor(Math.random()*26)];
+      const D = ()=>Math.floor(Math.random()*10);
+      const placa = `${L()}${L()}${L()}${D()}${L()}${D()}${D()}`;
+      if(currentType !== 'Pedestre'){
+        document.getElementById('inputPlate').value = placa;
+        document.getElementById('ocrStatus').textContent = `✓ Placa detectada automaticamente: ${placa}`;
+        document.getElementById('ocrStatus').style.color = 'var(--green)';
+      }
+      document.getElementById('photoStatusTitle').textContent = 'Foto Reconhecida';
+      document.getElementById('photoStatusText').textContent = 'OCR concluído com sucesso.';
+      toast('Foto processada com sucesso','success');
+    },1200);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeAttachedPhoto(){
+  attachedPhoto = null;
+  document.getElementById('photoPreviewImg').src = '';
+  document.getElementById('photoPreviewBox').classList.remove('show');
+  document.getElementById('nativeCameraInput').value = '';
+  document.getElementById('ocrStatus').textContent = 'Capture a foto para leitura automática por OCR ou digite a placa acima';
+  document.getElementById('ocrStatus').style.color = 'var(--text-muted)';
+}
+
+/* =========================================================
+   CHIPS DE DESTINO
+   ========================================================= */
+function fillDestination(txt){
+  const el = document.getElementById('inputDestination');
+  el.value = el.value ? el.value + ' • ' + txt : txt;
+}
+
+/* =========================================================
+   PERSISTÊNCIA
+   ========================================================= */
+function loadRecords(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    records = raw ? JSON.parse(raw) : [];
+  }catch(e){ records = []; }
+}
+function saveRecords(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+/* =========================================================
+   REGISTRAR
+   ========================================================= */
+function saveRecord(emitTicket){
+  const plate = document.getElementById('inputPlate').value.trim().toUpperCase();
+  const name = document.getElementById('inputPersonName').value.trim();
+  const cpf = document.getElementById('inputCpf').value.trim();
+  const destination = document.getElementById('inputDestination').value.trim();
+  const notes = document.getElementById('inputNotes').value.trim();
+
+  if(currentType !== 'Pedestre' && !plate){
+    toast('Informe a placa do veículo','error'); return;
+  }
+  if(!name){
+    toast('Informe o nome do condutor / pessoa','error'); return;
+  }
+
+  const rec = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
+    timestamp: Date.now(),
+    movement: currentMovement,
+    type: currentType,
+    plate: currentType === 'Pedestre' ? '—' : plate,
+    name, cpf, destination, notes,
+    photo: attachedPhoto
+  };
+
+  records.push(rec);
+  saveRecords();
+  updateStats();
+  renderTable();
+  renderPatio();
+
+  beep(currentMovement === 'Entrada' ? 880 : 440, 0.14);
+  toast(`✅ ${currentMovement} registrada para ${name}`,'success');
+
+  if(emitTicket) toast('🎫 Ticket emitido','info');
+
+  // Limpa formulário
+  document.getElementById('inputPlate').value = '';
+  document.getElementById('inputPersonName').value = '';
+  document.getElementById('inputCpf').value = '';
+  document.getElementById('inputDestination').value = '';
+  document.getElementById('inputNotes').value = '';
+  document.getElementById('cpfValidationBadge').textContent = '';
+  document.getElementById('cpfValidationBadge').className = 'cpf-status-badge';
+  removeAttachedPhoto();
+}
+
+/* =========================================================
+   ESTATÍSTICAS
+   ========================================================= */
+function updateStats(){
+  const hoje = new Date().toDateString();
+  const today = records.filter(r=> new Date(r.timestamp).toDateString() === hoje);
+
+  const presentes = getPresentes();
+  const statPatio = presentes.filter(p=> p.type !== 'Pedestre').length;
+  const statPed = presentes.filter(p=> p.type === 'Pedestre').length;
+
+  document.getElementById('statPatio').textContent = statPatio;
+  document.getElementById('statPedestres').textContent = statPed;
+  document.getElementById('statEntradas').textContent = today.filter(r=> r.movement === 'Entrada').length;
+  document.getElementById('statSaidas').textContent = today.filter(r=> r.movement === 'Saída').length;
+  document.getElementById('statTotal').textContent = records.length;
+  document.getElementById('tabCountPresentes').textContent = presentes.length;
+  document.getElementById('totalPresentesBadge').textContent = presentes.length;
+}
+
+/* =========================================================
+   LÓGICA DE PRESENTES (entradas sem saída correspondente)
+   ========================================================= */
+function getPresentes(){
+  // Agrupa por chave (placa para veículo, cpf/nome para pedestre)
+  const map = new Map();
+  const ordenado = [...records].sort((a,b)=> a.timestamp - b.timestamp);
+
+  ordenado.forEach(r=>{
+    const key = r.type === 'Pedestre'
+      ? 'P:' + (r.cpf || r.name.toLowerCase())
+      : 'V:' + r.plate.toUpperCase();
+
+    if(r.movement === 'Entrada'){
+      map.set(key, r);
+    }else if(r.movement === 'Saída'){
+      map.delete(key);
+    }
+  });
+
+  return Array.from(map.values());
+}
+
+/* =========================================================
+   RENDERIZAR TABELA / PLANILHA
+   ========================================================= */
+function renderTable(){
+  const tbody = document.getElementById('spreadsheetBody');
+  const q = (document.getElementById('searchTable').value || '').toLowerCase();
+  const fType = document.getElementById('filterType').value;
+  const fMov = document.getElementById('filterMovement').value;
+
+  const list = records
+    .filter(r=>{
+      if(fType !== 'ALL' && r.type !== fType) return false;
+      if(fMov !== 'ALL' && r.movement !== fMov) return false;
+      if(q){
+        const blob = `${r.plate} ${r.name} ${r.cpf} ${r.destination} ${r.notes}`.toLowerCase();
+        if(!blob.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a,b)=> b.timestamp - a.timestamp);
+
+  if(list.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="10">Nenhum registro encontrado.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(r=>{
+    const dt = new Date(r.timestamp);
+    const hora = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const photo = r.photo
+      ? `<img src="${r.photo}" class="thumb" alt="Foto" onclick="openPhoto('${r.id}')">`
+      : `<div class="thumb-empty">—</div>`;
+    return `
+      <tr>
+        <td>${hora}</td>
+        <td style="text-align:center;">${photo}</td>
+        <td><span class="row-plate">${escapeHtml(r.plate)}</span></td>
+        <td><span class="badge tipo-${r.type}">${r.type}</span></td>
+        <td><span class="badge mov-${r.movement}">${r.movement}</span></td>
+        <td><span class="row-name">${escapeHtml(r.name)}</span></td>
+        <td>${escapeHtml(r.cpf || '—')}</td>
+        <td>${escapeHtml(r.destination || '—')}</td>
+        <td>${escapeHtml(r.notes || '—')}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn danger" title="Excluir" onclick="deleteRecord('${r.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openPhoto(id){
+  const r = records.find(x=> x.id === id);
+  if(!r || !r.photo) return;
+  const w = window.open();
+  w.document.write(`<title>Foto - ${r.plate}</title><body style="margin:0;background:#000;display:grid;place-items:center;height:100vh"><img src="${r.photo}" style="max-width:100%;max-height:100%"></body>`);
+}
+
+function deleteRecord(id){
+  if(!confirm('Excluir este registro?')) return;
+  records = records.filter(r=> r.id !== id);
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  toast('Registro excluído','info');
+}
+
+function escapeHtml(s){
+  return String(s || '').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* =========================================================
+   RENDERIZAR PÁTIO
+   ========================================================= */
+function renderPatio(){
+  const tbody = document.getElementById('patioBody');
+  const presentes = getPresentes().sort((a,b)=> a.timestamp - b.timestamp);
+
+  if(presentes.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Nenhum veículo ou pedestre presente no momento.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = presentes.map(r=>{
+    const dt = new Date(r.timestamp);
+    const hora = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const diff = Date.now() - r.timestamp;
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const permanencia = h>0 ? `${h}h ${m}min` : `${m}min`;
+    return `
+      <tr>
+        <td>${hora}</td>
+        <td><span class="row-plate">${escapeHtml(r.plate)}</span></td>
+        <td><span class="badge tipo-${r.type}">${r.type}</span></td>
+        <td><span class="row-name">${escapeHtml(r.name)}</span></td>
+        <td>${escapeHtml(r.cpf || '—')}</td>
+        <td>${escapeHtml(r.destination || '—')}</td>
+        <td>${permanencia}</td>
+        <td style="text-align:center;">
+          <button class="btn-action btn-export-excel" onclick="registrarSaida('${r.id}')" style="padding:6px 12px;">
+            Registrar Saída
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function registrarSaida(id){
+  const r = records.find(x=> x.id === id);
+  if(!r) return;
+  const saida = {
+    ...r,
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
+    timestamp: Date.now(),
+    movement: 'Saída'
+  };
+  records.push(saida);
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  beep(440,0.14);
+  toast(`Saída registrada para ${r.name}`,'success');
+}
+
+/* =========================================================
+   EXPORTAR CSV
+   ========================================================= */
+function exportToCSV(){
+  if(records.length === 0){ toast('Nada para exportar','error'); return; }
+  const header = ['Data/Hora','Movimento','Tipo','Placa','Nome','CPF','Destino','Observações'];
+  const rows = records.map(r=>{
+    const dt = new Date(r.timestamp).toLocaleString('pt-BR');
+    return [dt, r.movement, r.type, r.plate, r.name, r.cpf, r.destination, r.notes]
+      .map(v=> `"${String(v||'').replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = '\uFEFF' + [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `registros_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('Arquivo CSV gerado','success');
+}
+
+/* =========================================================
+   IMPRIMIR
+   ========================================================= */
+function printSpreadsheet(){
+  window.print();
+}
+
+/* =========================================================
+   MODAL / BACKUP
+   ========================================================= */
+function openBackupModal(){
+  document.getElementById('backupModal').classList.add('show');
+}
+function closeBackupModal(){
+  document.getElementById('backupModal').classList.remove('show');
+}
+
+function exportBackupJSON(){
+  const data = { gerado: new Date().toISOString(), registros: records };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `backup_portaria_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('Backup gerado','success');
+}
+
+function handleRestoreFile(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(Array.isArray(data)){
+        records = data;
+      }else if(Array.isArray(data.registros)){
+        records = data.registros;
+      }else{
+        throw new Error('formato');
+      }
+      saveRecords();
+      updateStats(); renderTable(); renderPatio();
+      toast('Backup restaurado com sucesso','success');
+      closeBackupModal();
+    }catch(err){
+      toast('Arquivo inválido','error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData(){
+  if(!confirm('Isso apagará TODOS os registros. Continuar?')) return;
+  records = [];
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  toast('Todos os dados foram apagados','info');
+}
+
+/* =========================================================
+   DADOS DE DEMONSTRAÇÃO
+   ========================================================= */
+function seedDemoData(){
+  const agora = Date.now();
+  const demo = [
+    {mov:'Entrada', tipo:'Carro',    placa:'ABC1D23', nome:'Roberto Carlos',   cpf:'123.456.789-01', dest:'Apto 302 - Bloco A', obs:'Crachá #12'},
+    {mov:'Entrada', tipo:'Moto',     placa:'XYZ9K88', nome:'Marcos Andrade',   cpf:'987.654.321-00', dest:'Delivery',           obs:'iFood'},
+    {mov:'Saída',   tipo:'Carro',    placa:'ABC1D23', nome:'Roberto Carlos',   cpf:'123.456.789-01', dest:'Apto 302 - Bloco A', obs:'Saída normal'},
+    {mov:'Entrada', tipo:'Pedestre', placa:'—',       nome:'Juliana Freitas',  cpf:'111.222.333-44', dest:'Administração',      obs:'Reunião'},
+    {mov:'Entrada', tipo:'Caminhão', placa:'QWE4R56', nome:'Transportes Alfa', cpf:'555.666.777-88', dest:'Bloco B',            obs:'Entrega grande'},
+    {mov:'Entrada', tipo:'Carro',    placa:'LMN7P90', nome:'Carlos Souza',     cpf:'222.333.444-55', dest:'Apto 105',           obs:''}
+  ];
+  demo.forEach((d,i)=>{
+    records.push({
+      id: 'demo-' + i + '-' + Math.random().toString(36).slice(2,6),
+      timestamp: agora - (i * 15 * 60000),
+      movement: d.mov, type: d.tipo, plate: d.placa,
+      name: d.nome, cpf: d.cpf, destination: d.dest, notes: d.obs,
+      photo: null
+    });
+  });
+  saveRecords();
+  updateStats(); renderTable(); renderPatio();
+  closeBackupModal();
+  toast('Dados de demonstração carregados','success');
+}
+
+/* =========================================================
+   FECHAR MODAL CLICANDO FORA
+   ========================================================= */
+document.getElementById('backupModal').addEventListener('click', e=>{
+  if(e.target.id === 'backupModal') closeBackupModal();
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+loadRecords();
+updateStats();
+renderTable();
+renderPatio();
+setAccessType('Carro');
+</script>
+</body>
+</html>
