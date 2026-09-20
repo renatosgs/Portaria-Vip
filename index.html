@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Portaria VIP - Controle de Acesso e Placas</title>
+  
+  <!-- PWA & iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Portaria VIP">
+  <meta name="theme-color" content="#0b0f19">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Tesseract.js para Reconhecimento OCR de Placas -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #131d31;
+      --gold: #f59e0b;
+      --gold-light: #fbbf24;
+      --gold-glow: rgba(245, 158, 11, 0.25);
+      --green: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.25);
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.25);
+      --blue: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #23314e;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
+    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 50px; }
+
+    header {
+      background: linear-gradient(180deg, #131d31 0%, #0b0f19 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px);
+    }
+    .header-content { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-badge {
+      width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold) 0%, #b45309 100%);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800;
+    }
+    .logo-title { font-size: 20px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, var(--gold-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-subtitle { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+
+    .main-container { max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; position: relative; }
+    .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+    .stat-card.patio::before { background-color: var(--gold); }
+    .stat-card.entradas::before { background-color: var(--green); }
+    .stat-card.saidas::before { background-color: var(--red); }
+    .stat-card.total::before { background-color: var(--blue); }
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; }
+    .stat-value { font-size: 22px; font-weight: 800; color: #fff; }
+
+    .tab-navigation { display: flex; background-color: #0e1626; border: 1px solid var(--border); border-radius: 14px; padding: 4px; gap: 4px; }
+    .tab-btn {
+      flex: 1; padding: 12px 8px; border: none; background: transparent; color: var(--text-muted);
+      font-size: 14px; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .tab-btn.active { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.4); }
+
+    .vip-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35); }
+    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+    .section-title span { color: var(--gold); }
+
+    /* Botão de Câmera */
+    .camera-hero {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle, #1a2744 0%, #0d1525 100%); border: 2px dashed #2d416b;
+      border-radius: 16px; padding: 22px 16px; text-align: center; cursor: pointer; margin-bottom: 18px;
+    }
+    .camera-icon-circle {
+      width: 74px; height: 74px; border-radius: 50%; background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 6px 20px var(--gold-glow); margin-bottom: 10px;
+    }
+
+    /* Entrada / Saída */
+    .movement-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .mov-btn {
+      border: 2px solid var(--border); background: #0f172a; padding: 14px; border-radius: 14px;
+      color: var(--text-muted); font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .mov-btn.entrada.active { background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); border-color: var(--green); color: #34d399; }
+    .mov-btn.saida.active { background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border-color: var(--red); color: #f87171; }
+
+    /* Carro / Moto / Caminhão */
+    .vehicle-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .veh-btn {
+      border: 2px solid var(--border); background: #0f172a; padding: 12px 6px; border-radius: 14px;
+      color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .veh-btn.active { background: linear-gradient(135deg, #1e293b 0%, #1e3a8a 100%); border-color: var(--gold); color: #fff; box-shadow: 0 4px 15px var(--gold-glow); }
+
+    /* Placa Mercosul */
+    .plate-box { background-color: #0b111e; border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .mercosul-plate { width: 230px; height: 75px; background: #fff; border: 3px solid #000; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    .mercosul-header { background: #003399; height: 20px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; color: white; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+    .plate-input { background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 26px; font-weight: 900; text-align: center; color: #000; letter-spacing: 4px; text-transform: uppercase; width: 100%; height: 50px; outline: none; }
+
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    @media (max-width: 500px) { .input-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .form-input { background: #0b111e; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #fff; outline: none; }
+    .form-input:focus { border-color: var(--gold); }
+
+    .btn-save-record {
+      width: 100%; background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%); color: #0b0f19; border: none;
+      padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+
+    /* Planilha */
+    .spreadsheet-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: #0c1220; }
+    table.spreadsheet { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 700px; }
+    table.spreadsheet th { background: #131c30; padding: 12px 14px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); }
+    table.spreadsheet td { padding: 12px 14px; border-bottom: 1px solid #1a253d; vertical-align: middle; }
+    .badge-mov { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .badge-mov.entrada { background: rgba(16,185,129,0.18); color: #34d399; }
+    .badge-mov.saida { background: rgba(239,68,68,0.18); color: #f87171; }
+    .badge-plate { font-family: 'Courier New', monospace; font-weight: 900; background: #002244; color: #fff; padding: 3px 8px; border-radius: 6px; }
+
+    .btn-export { background: linear-gradient(135deg, #10b981 0%, #047857 100%); border: none; color: white; padding: 10px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="header-content">
+      <div class="logo-area">
+        <div class="logo-badge">🛡️</div>
+        <div>
+          <div class="logo-title">PORTARIA VIP</div>
+          <div class="logo-subtitle">Reconhecimento & Controle</div>
+        </div>
+      </div>
+      <div id="clockTime" style="font-weight: 700; color: var(--gold-light);">--:--:--</div>
+    </div>
+  </header>
+
+  <div class="main-container">
+
+    <!-- Indicadores no Topo -->
+    <div class="stats-grid">
+      <div class="stat-card patio">
+        <span class="stat-label">No Pátio Agora</span>
+        <span class="stat-value" id="statPatio">0</span>
+      </div>
+      <div class="stat-card entradas">
+        <span class="stat-label">Entradas Hoje</span>
+        <span class="stat-value" id="statEntradas">0</span>
+      </div>
+      <div class="stat-card saidas">
+        <span class="stat-label">Saídas Hoje</span>
+        <span class="stat-value" id="statSaidas">0</span>
+      </div>
+      <div class="stat-card total">
+        <span class="stat-label">Total Planilha</span>
+        <span class="stat-value" id="statTotal">0</span>
+      </div>
+    </div>
+
+    <!-- Navegação de Abas -->
+    <div class="tab-navigation">
+      <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">📸 Novo Registro</button>
+      <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">📊 Planilha Integrada</button>
+      <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">🅿️ Veículos no Pátio</button>
+    </div>
+
+    <!-- ABA: NOVO REGISTRO -->
+    <div id="tabContentRegistro">
+      <div class="vip-card">
+        
+        <!-- Entrada / Saída -->
+        <div class="section-title"><span>01.</span> Movimentação</div>
+        <div class="movement-selector">
+          <button type="button" class="mov-btn entrada active" id="btnEntrada" onclick="setMovement('Entrada')">🟢 ENTRADA</button>
+          <button type="button" class="mov-btn saida" id="btnSaida" onclick="setMovement('Saída')">🔴 SAÍDA</button>
+        </div>
+
+        <!-- Carro / Moto / Caminhão -->
+        <div class="section-title"><span>02.</span> Tipo de Veículo</div>
+        <div class="vehicle-selector">
+          <button type="button" class="veh-btn active" id="btnCarro" onclick="setVehicleType('Carro')">
+            <span style="font-size: 26px;">🚗</span><span>Carro</span>
+          </button>
+          <button type="button" class="veh-btn" id="btnMoto" onclick="setVehicleType('Moto')">
+            <span style="font-size: 26px;">🏍️</span><span>Moto</span>
+          </button>
+          <button type="button" class="veh-btn" id="btnCaminhao" onclick="setVehicleType('Caminhão')">
+            <span style="font-size: 26px;">🚚</span><span>Caminhão</span>
+          </button>
+        </div>
+
+        <!-- Abrir Câmera -->
+        <div class="section-title"><span>03.</span> Foto & Leitura da Placa</div>
+        <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleNativeImage(this)">
+
+        <div class="camera-hero" onclick="document.getElementById('nativeCameraInput').click()">
+          <div class="camera-icon-circle">📸</div>
+          <strong style="font-size: 16px;">Abrir Câmera</strong>
+          <span style="font-size: 12px; color: var(--text-muted);">Toque para tirar foto da placa e ler automaticamente</span>
+        </div>
+
+        <!-- Pré-visualização da Placa Mercosul -->
+        <div class="plate-box">
+          <div class="mercosul-plate">
+            <div class="mercosul-header"><span>BRASIL</span><span>MERCOSUL</span></div>
+            <input type="text" id="inputPlate" class="plate-input" placeholder="ABC1D23" maxlength="8" oninput="this.value = this.value.toUpperCase()">
+          </div>
+          <span id="ocrStatus" style="font-size: 12px; color: var(--text-muted);">Tire a foto ou digite a placa acima</span>
+        </div>
+
+        <!-- Condutor e Destino -->
+        <div class="section-title"><span>04.</span> Dados do Registro</div>
+        <div class="input-grid">
+          <div class="form-group">
+            <label>Condutor / Motorista</label>
+            <input type="text" id="inputDriver" class="form-input" placeholder="Ex: Roberto Carlos / Entregador">
+          </div>
+          <div class="form-group">
+            <label>Destino / Apartamento / Bloco</label>
+            <input type="text" id="inputDestination" class="form-input" placeholder="Ex: Apto 204 Bloco C">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label>Observações</label>
+          <input type="text" id="inputNotes" class="form-input" placeholder="Ex: Carga e descarga autorizada">
+        </div>
+
+        <button type="button" class="btn-save-record" onclick="saveRecord()">💾 REGISTRAR NA PLANILHA</button>
+      </div>
+    </div>
+
+    <!-- ABA: PLANILHA INTEGRADA -->
+    <div id="tabContentPlanilha" style="display: none;">
+      <div class="vip-card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
+          <input type="text" id="searchTable" class="form-input" placeholder="🔍 Buscar por placa ou condutor..." oninput="renderTable()" style="flex: 1; min-width: 200px;">
+          <button class="btn-export" onclick="exportToCSV()">📥 Baixar Planilha (Excel/CSV)</button>
+        </div>
+
+        <div class="spreadsheet-wrapper">
+          <table class="spreadsheet">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Foto</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Movimento</th>
+                <th>Condutor</th>
+                <th>Destino</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="spreadsheetBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: VEÍCULOS NO PÁTIO -->
+    <div id="tabContentPatio" style="display: none;">
+      <div class="vip-card">
+        <div class="section-title"><span>🅿️</span> Veículos Atualmente no Pátio</div>
+        <div class="spreadsheet-wrapper">
+          <table class="spreadsheet">
+            <thead>
+              <tr>
+                <th>Entrada</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Condutor</th>
+                <th>Destino</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="patioBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let appState = {
+      movement: 'Entrada',
+      vehicleType: 'Carro',
+      currentPhotoBase64: '',
+      records: JSON.parse(localStorage.getItem('PORTARIA_VIP_DATA') || '[]')
+    };
+
+    function updateClock() {
+      document.getElementById('clockTime').textContent = new Date().toLocaleTimeString('pt-BR');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function setMovement(mov) {
+      appState.movement = mov;
+      document.getElementById('btnEntrada').classList.toggle('active', mov === 'Entrada');
+      document.getElementById('btnSaida').classList.toggle('active', mov === 'Saída');
+    }
+
+    function setVehicleType(t) {
+      appState.vehicleType = t;
+      document.getElementById('btnCarro').classList.toggle('active', t === 'Carro');
+      document.getElementById('btnMoto').classList.toggle('active', t === 'Moto');
+      document.getElementById('btnCaminhao').classList.toggle('active', t === 'Caminhão');
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tabContentRegistro').style.display = tab === 'registro' ? 'block' : 'none';
+      document.getElementById('tabContentPlanilha').style.display = tab === 'planilha' ? 'block' : 'none';
+      document.getElementById('tabContentPatio').style.display = tab === 'patio' ? 'block' : 'none';
+      document.getElementById('tabBtnRegistro').classList.toggle('active', tab === 'registro');
+      document.getElementById('tabBtnPlanilha').classList.toggle('active', tab === 'planilha');
+      document.getElementById('tabBtnPatio').classList.toggle('active', tab === 'patio');
+      if (tab === 'planilha') renderTable();
+      if (tab === 'patio') renderPatio();
+    }
+
+    function handleNativeImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          appState.currentPhotoBase64 = e.target.result;
+          const status = document.getElementById('ocrStatus');
+          status.textContent = '⏳ Reconhecendo placa na foto...';
+
+          if (window.Tesseract) {
+            try {
+              const res = await Tesseract.recognize(e.target.result, 'por+eng');
+              const text = res.data.text.toUpperCase().replace(/[^A-Z0-9]/g, ' ');
+              const match = text.match(/[A-Z]{3}[0-9][A-Z0-9][0-9]{2}/) || text.match(/[A-Z]{3}[0-9]{4}/);
+              if (match) {
+                document.getElementById('inputPlate').value = match[0];
+                status.textContent = '✅ Placa identificada: ' + match[0];
+                return;
+              }
+            } catch (err) {}
+          }
+          status.textContent = '📸 Foto anexada. Confirme a placa no campo.';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function saveRecord() {
+      const plate = document.getElementById('inputPlate').value.trim().toUpperCase();
+      if (!plate) return alert('Por favor, digite ou capture a placa do veículo.');
+
+      const now = new Date();
+      const rec = {
+        id: Date.now(),
+        date: now.toLocaleDateString('pt-BR'),
+        time: now.toLocaleTimeString('pt-BR'),
+        timestamp: now.getTime(),
+        plate: plate,
+        movement: appState.movement,
+        vehicleType: appState.vehicleType,
+        driver: document.getElementById('inputDriver').value.trim() || 'Não informado',
+        destination: document.getElementById('inputDestination').value.trim() || 'Geral',
+        notes: document.getElementById('inputNotes').value.trim() || '-',
+        photo: appState.currentPhotoBase64
+      };
+
+      appState.records.unshift(rec);
+      localStorage.setItem('PORTARIA_VIP_DATA', JSON.stringify(appState.records));
+
+      document.getElementById('inputPlate').value = '';
+      document.getElementById('inputDriver').value = '';
+      document.getElementById('inputDestination').value = '';
+      document.getElementById('inputNotes').value = '';
+      appState.currentPhotoBase64 = '';
+      document.getElementById('ocrStatus').textContent = '✅ Registro gravado na planilha com sucesso!';
+
+      renderStats();
+      alert(`Registro de ${rec.movement} salvo para a placa ${rec.plate}!`);
+    }
+
+    function renderStats() {
+      const today = new Date().toLocaleDateString('pt-BR');
+      let ent = 0, sai = 0;
+      appState.records.forEach(r => {
+        if (r.date === today) {
+          if (r.movement === 'Entrada') ent++;
+          if (r.movement === 'Saída') sai++;
+        }
+      });
+      const patio = calculatePatio();
+      document.getElementById('statPatio').textContent = patio.length;
+      document.getElementById('statEntradas').textContent = ent;
+      document.getElementById('statSaidas').textContent = sai;
+      document.getElementById('statTotal').textContent = appState.records.length;
+    }
+
+    function calculatePatio() {
+      const sorted = [...appState.records].sort((a,b) => a.timestamp - b.timestamp);
+      const map = new Map();
+      sorted.forEach(r => {
+        if (r.movement === 'Entrada') map.set(r.plate, r);
+        else if (r.movement === 'Saída') map.delete(r.plate);
+      });
+      return Array.from(map.values()).reverse();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('spreadsheetBody');
+      const q = (document.getElementById('searchTable').value || '').toLowerCase();
+      const list = appState.records.filter(r => r.plate.toLowerCase().includes(q) || r.driver.toLowerCase().includes(q));
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#888;">Nenhum registro encontrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(r => `
+        <tr>
+          <td><strong>${r.time}</strong><br><small style="color:#888;">${r.date}</small></td>
+          <td>${r.photo ? `<img src="${r.photo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : '📷'}</td>
+          <td><span class="badge-plate">${r.plate}</span></td>
+          <td>${r.vehicleType === 'Moto' ? '🏍️' : (r.vehicleType === 'Caminhão' ? '🚚' : '🚗')} ${r.vehicleType}</td>
+          <td><span class="badge-mov ${r.movement === 'Entrada' ? 'entrada' : 'saida'}">${r.movement === 'Entrada' ? '🟢' : '🔴'} ${r.movement}</span></td>
+          <td>${r.driver}</td>
+          <td>${r.destination}</td>
+          <td>
+            ${r.movement === 'Entrada' ? `<button onclick="darSaida('${r.plate}', '${r.vehicleType}')" style="background:#1e293b;border:1px solid #334155;color:#fff;padding:4px 8px;border-radius:6px;cursor:pointer;">Dar Saída 🔴</button>` : '-'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPatio() {
+      const tbody = document.getElementById('patioBody');
+      const patio = calculatePatio();
+      if (patio.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">Nenhum veículo estacionado.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = patio.map(r => `
+        <tr>
+          <td>${r.time}</td>
+          <td><span class="badge-plate">${r.plate}</span></td>
+          <td>${r.vehicleType}</td>
+          <td>${r.driver}</td>
+          <td>${r.destination}</td>
+          <td><button onclick="darSaida('${r.plate}', '${r.vehicleType}')" style="background:#ef4444;border:none;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;">Registrar Saída</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function darSaida(plate, tipo) {
+      switchTab('registro');
+      setMovement('Saída');
+      setVehicleType(tipo);
+      document.getElementById('inputPlate').value = plate;
+    }
+
+    function exportToCSV() {
+      if (appState.records.length === 0) return alert('Nenhum registro para exportar.');
+      const headers = ["Data", "Hora", "Placa", "Veículo", "Movimento", "Condutor", "Destino", "Observações"];
+      const rows = appState.records.map(r => [
+        `"${r.date}"`, `"${r.time}"`, `"${r.plate}"`, `"${r.vehicleType}"`, `"${r.movement}"`, `"${r.driver}"`, `"${r.destination}"`, `"${r.notes}"`
+      ]);
+      const csv = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\r\n");
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `Portaria_VIP_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    renderStats();
+  </script>
+</body>
+</html>
