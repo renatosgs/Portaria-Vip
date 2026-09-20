@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Portaria VIP Pro | Sistema de Controle de Acesso e Segurança Integrada</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- Tesseract.js agora é carregado sob demanda (lazy) dentro do JS -->
 
   <style>
     :root {
@@ -91,6 +91,12 @@
       overscroll-behavior: none;
     }
 
+    /* ====== LAYOUT FIXO ======
+       body vira uma coluna de 3 zonas fixas:
+       1) header      (flex-shrink: 0)
+       2) toolbar     (flex-shrink: 0)  <- stats + tabs
+       3) main        (flex: 1; overflow-y: auto)  <- só o conteúdo rola
+    */
     body {
       height: 100vh;
       height: 100dvh;
@@ -122,12 +128,13 @@
     ::-webkit-scrollbar-thumb { background: #1f2a44; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #2e3e63; }
 
+    /* ============ HEADER (FIXO NO TOPO) ============ */
     header {
-      background: rgba(10, 15, 28, 0.88);
+      background: rgba(10, 15, 28, 0.9);
       border-bottom: 1px solid var(--border);
       padding: max(14px, env(safe-area-inset-top)) 24px 14px 24px;
       position: relative;
-      z-index: 80;
+      z-index: 90;
       flex-shrink: 0;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -171,26 +178,64 @@
     .icon-btn { width: 36px; height: 36px; border-radius: 10px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
     .icon-btn:hover { background: #18233d; color: #fff; border-color: rgba(255, 255, 255, 0.2); }
 
-    .main-container {
+    /* ============ TOOLBAR FIXA (stats + tabs) ============ */
+    .sticky-toolbar {
+      flex-shrink: 0;
+      z-index: 80;
+      background: rgba(7, 10, 18, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+      padding: 12px 20px;
+    }
+    .sticky-toolbar-inner {
       max-width: 1180px;
-      width: 100%;
       margin: 0 auto;
-      padding: 24px 20px max(24px, env(safe-area-inset-bottom)) 20px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      flex: 1;
+      gap: 10px;
+    }
+
+    /* ============ ÁREA ROLÁVEL ============ */
+    .main-container {
+      flex: 1 1 auto;
+      min-height: 0; /* crítico para flex-shrink funcionar */
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px 20px max(24px, env(safe-area-inset-bottom)) 20px;
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    /* ============ STATS ============ */
+    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
     @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 640px) { .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 
-    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+    /* Mobile: faixa horizontal rolável para não engolir a tela */
+    @media (max-width: 640px) {
+      .stats-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .stats-grid::-webkit-scrollbar { display: none; }
+      .stat-card { flex: 0 0 145px; min-width: 145px; padding: 12px 14px; }
+      .stat-value { font-size: 22px; }
+      .stat-label { font-size: 10px; }
+      .stat-desc { font-size: 10px; }
+    }
+
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
     .stat-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.18); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45); }
     .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 3px; }
     .stat-card.patio::before { background: linear-gradient(90deg, var(--gold), transparent); }
@@ -199,19 +244,20 @@
     .stat-card.saidas::before { background: linear-gradient(90deg, var(--red), transparent); }
     .stat-card.total::before { background: linear-gradient(90deg, var(--purple), transparent); }
 
-    .stat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .stat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.6px; }
-    .stat-icon-wrap { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .stat-icon-wrap { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .stat-card.patio .stat-icon-wrap { background: rgba(245, 158, 11, 0.12); color: var(--gold-light); }
     .stat-card.pedestres .stat-icon-wrap { background: rgba(6, 182, 212, 0.12); color: var(--cyan); }
     .stat-card.entradas .stat-icon-wrap { background: rgba(16, 185, 129, 0.12); color: var(--green-light); }
     .stat-card.saidas .stat-icon-wrap { background: rgba(244, 63, 94, 0.12); color: var(--red-light); }
     .stat-card.total .stat-icon-wrap { background: rgba(139, 92, 246, 0.12); color: var(--purple-light); }
-    .stat-value { font-size: 28px; font-weight: 800; color: #fff; font-family: var(--font-mono); line-height: 1; letter-spacing: -1px; }
-    .stat-desc { font-size: 11px; color: var(--text-subtle); margin-top: 6px; font-weight: 500; }
+    .stat-value { font-size: 26px; font-weight: 800; color: #fff; font-family: var(--font-mono); line-height: 1; letter-spacing: -1px; }
+    .stat-desc { font-size: 10px; color: var(--text-subtle); margin-top: 4px; font-weight: 500; }
 
-    .tab-navigation { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 6px; gap: 6px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); }
-    .tab-btn { width: 100%; padding: 12px 16px; border: 1px solid transparent; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+    /* ============ TABS ============ */
+    .tab-navigation { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 5px; gap: 5px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); }
+    .tab-btn { width: 100%; padding: 10px 14px; border: 1px solid transparent; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
     .tab-btn svg { transition: transform 0.2s; }
     .tab-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.04); }
     .tab-btn:hover svg { transform: scale(1.1); }
@@ -221,10 +267,12 @@
 
     @media (max-width: 640px) {
       .tab-navigation { padding: 4px; gap: 4px; }
-      .tab-btn { flex-direction: column; padding: 10px 4px; font-size: 11px; gap: 4px; }
-      .tab-btn svg { width: 18px; height: 18px; }
+      .tab-btn { flex-direction: column; padding: 8px 4px; font-size: 10px; gap: 3px; line-height: 1.1; }
+      .tab-btn svg { width: 16px; height: 16px; }
+      .tab-count-badge { font-size: 9px; padding: 1px 6px; }
     }
 
+    /* ============ CARDS / FORM ============ */
     .vip-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 28px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); position: relative; }
     @media (max-width: 640px) { .vip-card { padding: 18px; } }
 
@@ -276,7 +324,7 @@
 
     .plate-card-wrapper { margin-bottom: 24px; }
     .plate-box { background: #0b101c; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
-    .mercosul-plate { width: 270px; height: 90px; background: #ffffff; border: 4px solid #111827; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 4px rgba(0, 0, 0, 0.2); position: relative; transition: all 0.3s ease; }
+    .mercosul-plate { width: 270px; height: 90px; max-width: 100%; background: #ffffff; border: 4px solid #111827; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 4px rgba(0, 0, 0, 0.2); position: relative; transition: all 0.3s ease; }
     .mercosul-plate.cinza-style { background: #cbd5e1; border-color: #475569; }
     .mercosul-header { background: #003399; height: 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; color: white; font-size: 10px; font-weight: 800; letter-spacing: 2px; transition: all 0.3s ease; }
     .mercosul-plate.cinza-style .mercosul-header { background: #475569; justify-content: center; }
@@ -293,7 +341,7 @@
     @media (max-width: 650px) { .input-grid { grid-template-columns: 1fr; } }
 
     .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .label-hint { font-size: 10px; color: var(--text-subtle); font-weight: 600; text-transform: uppercase; }
     .input-with-icon { position: relative; display: flex; align-items: center; }
     .input-with-icon svg { position: absolute; left: 14px; color: var(--text-subtle); pointer-events: none; }
@@ -388,7 +436,7 @@
     .ticket-row span:last-child, .ticket-row strong:last-child { text-align: right; }
     .ticket-footer { border-top: 1px dashed #000; padding-top: 10px; margin-top: 12px; text-align: center; font-size: 10px; }
 
-    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 12px; pointer-events: none; max-width: calc(100vw - 48px); }
+    .toast-container { position: fixed; bottom: max(24px, env(safe-area-inset-bottom)); right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 12px; pointer-events: none; max-width: calc(100vw - 48px); }
     .toast { background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(255, 255, 255, 0.12); color: #fff; padding: 14px 20px; border-radius: 14px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600; min-width: 300px; transform: translateY(30px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: auto; }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { border-left: 5px solid var(--green); }
@@ -400,8 +448,9 @@
       to { opacity: 1; transform: scale(1); }
     }
 
+    /* ============ IMPRESSÃO ============ */
     @media print {
-      body { background: white !important; color: black !important; padding: 0 !important; overflow: visible !important; height: auto !important; }
+      body { background: white !important; color: black !important; padding: 0 !important; overflow: visible !important; height: auto !important; display: block !important; }
       body * { visibility: hidden; }
 
       body.printing-ticket #ticketPrintArea,
@@ -409,8 +458,9 @@
       body.printing-ticket #ticketPrintArea { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; border: 2px dashed #000; }
 
       body.printing-spreadsheet header,
-      body.printing-spreadsheet .tab-navigation,
+      body.printing-spreadsheet .sticky-toolbar,
       body.printing-spreadsheet .stats-grid,
+      body.printing-spreadsheet .tab-navigation,
       body.printing-spreadsheet .table-controls,
       body.printing-spreadsheet .form-actions-grid,
       body.printing-spreadsheet .action-buttons-bar,
@@ -423,6 +473,8 @@
       body.printing-spreadsheet #tabContentPlanilha { display: block !important; visibility: visible; }
       body.printing-spreadsheet #tabContentPlanilha * { visibility: visible; }
 
+      body.printing-spreadsheet .main-container { overflow: visible !important; padding: 0 !important; max-width: 100% !important; }
+      body.printing-spreadsheet .spreadsheet-wrapper { overflow: visible !important; }
       body.printing-spreadsheet table.spreadsheet { width: 100% !important; min-width: 100% !important; border: 1px solid #000; color: black !important; }
       body.printing-spreadsheet table.spreadsheet th { background: #f1f5f9 !important; color: black !important; border-bottom: 2px solid #000 !important; }
       body.printing-spreadsheet table.spreadsheet td { border-bottom: 1px solid #ccc !important; color: black !important; padding: 8px 10px !important; }
@@ -441,6 +493,7 @@
 </head>
 <body>
 
+  <!-- ============ 1) HEADER FIXO ============ -->
   <header>
     <div class="header-content">
       <div class="logo-area">
@@ -487,113 +540,118 @@
     </div>
   </header>
 
+  <!-- ============ 2) TOOLBAR FIXA (stats + tabs) ============ -->
+  <div class="sticky-toolbar">
+    <div class="sticky-toolbar-inner">
+
+      <div class="stats-grid">
+        <div class="stat-card patio">
+          <div class="stat-top">
+            <span class="stat-label">Veículos no Pátio</span>
+            <div class="stat-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M9 16V8h4a2 2 0 0 1 0 4H9"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" id="statPatio">0</div>
+          <div class="stat-desc">Estacionamento ativo</div>
+        </div>
+
+        <div class="stat-card pedestres">
+          <div class="stat-top">
+            <span class="stat-label">Pedestres no Local</span>
+            <div class="stat-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" id="statPedestres">0</div>
+          <div class="stat-desc">Visitantes e serviços</div>
+        </div>
+
+        <div class="stat-card entradas">
+          <div class="stat-top">
+            <span class="stat-label">Entradas Hoje</span>
+            <div class="stat-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="19" x2="12" y2="5"/>
+                <polyline points="5 12 12 5 19 12"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" id="statEntradas">0</div>
+          <div class="stat-desc">Acessos autorizados</div>
+        </div>
+
+        <div class="stat-card saidas">
+          <div class="stat-top">
+            <span class="stat-label">Saídas Hoje</span>
+            <div class="stat-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <polyline points="19 12 12 19 5 12"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" id="statSaidas">0</div>
+          <div class="stat-desc">Finalizados hoje</div>
+        </div>
+
+        <div class="stat-card total">
+          <div class="stat-top">
+            <span class="stat-label">Total Registros</span>
+            <div class="stat-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-desc">Base de dados ativa</div>
+        </div>
+      </div>
+
+      <div class="tab-navigation">
+        <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <span>Novo Registro</span>
+        </button>
+
+        <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <span>Planilha & Histórico</span>
+        </button>
+
+        <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span>Presentes <span class="tab-count-badge" id="tabCountPresentes">0</span></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 3) ÁREA ROLÁVEL ============ -->
   <div class="main-container">
-
-    <div class="stats-grid">
-      <div class="stat-card patio">
-        <div class="stat-top">
-          <span class="stat-label">Veículos no Pátio</span>
-          <div class="stat-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M9 16V8h4a2 2 0 0 1 0 4H9"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-value" id="statPatio">0</div>
-        <div class="stat-desc">Estacionamento ativo</div>
-      </div>
-
-      <div class="stat-card pedestres">
-        <div class="stat-top">
-          <span class="stat-label">Pedestres no Local</span>
-          <div class="stat-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-value" id="statPedestres">0</div>
-        <div class="stat-desc">Visitantes e serviços</div>
-      </div>
-
-      <div class="stat-card entradas">
-        <div class="stat-top">
-          <span class="stat-label">Entradas Hoje</span>
-          <div class="stat-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="19" x2="12" y2="5"/>
-              <polyline points="5 12 12 5 19 12"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-value" id="statEntradas">0</div>
-        <div class="stat-desc">Acessos autorizados</div>
-      </div>
-
-      <div class="stat-card saidas">
-        <div class="stat-top">
-          <span class="stat-label">Saídas Hoje</span>
-          <div class="stat-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <polyline points="19 12 12 19 5 12"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-value" id="statSaidas">0</div>
-        <div class="stat-desc">Finalizados hoje</div>
-      </div>
-
-      <div class="stat-card total">
-        <div class="stat-top">
-          <span class="stat-label">Total Registros</span>
-          <div class="stat-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-value" id="statTotal">0</div>
-        <div class="stat-desc">Base de dados ativa</div>
-      </div>
-    </div>
-
-    <div class="tab-navigation">
-      <button class="tab-btn active" id="tabBtnRegistro" onclick="switchTab('registro')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-        <span>Novo Registro</span>
-      </button>
-
-      <button class="tab-btn" id="tabBtnPlanilha" onclick="switchTab('planilha')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
-          <polyline points="10 9 9 9 8 9"/>
-        </svg>
-        <span>Planilha & Histórico</span>
-      </button>
-
-      <button class="tab-btn" id="tabBtnPatio" onclick="switchTab('patio')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-          <circle cx="12" cy="10" r="3"/>
-        </svg>
-        <span>
-          Presentes no Local
-          <span class="tab-count-badge" id="tabCountPresentes">0</span>
-        </span>
-      </button>
-    </div>
 
     <div id="tabContentRegistro">
       <div class="vip-card">
@@ -952,6 +1010,7 @@
 
   </div>
 
+  <!-- ============ MODAIS ============ -->
   <div class="modal-overlay" id="photoModal" onclick="closePhotoModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closePhotoModal()" aria-label="Fechar">✕</button>
@@ -1059,10 +1118,12 @@
 
     let activeWebcamStream = null;
     let sharedAudioCtx = null;
+    let tesseractLoadingPromise = null;
 
     const STORAGE_KEY = 'PORTARIA_VIP_DATA';
     const SOUND_KEY = 'PORTARIA_VIP_SOUND';
 
+    /* ============ PERSISTÊNCIA ============ */
     function loadData() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -1081,9 +1142,15 @@
     function persistData() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState.records));
+        return true;
       } catch (e) {
-        console.warn('localStorage cheio:', e);
-        showToast('Aviso: Armazenamento local cheio. Exporte um backup.', 'error');
+        if (e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014)) {
+          showToast('⚠️ Armazenamento cheio! Exporte um backup e remova registros antigos.', 'error');
+        } else {
+          console.error('Erro ao persistir:', e);
+          showToast('Erro ao salvar dados localmente.', 'error');
+        }
+        return false;
       }
     }
 
@@ -1097,6 +1164,7 @@
         .replace(/'/g, '&#039;');
     }
 
+    /* ============ ÁUDIO ============ */
     function playBeep(freq = 600, duration = 0.1) {
       if (!appState.soundEnabled) return;
       try {
@@ -1132,6 +1200,7 @@
       }
     }
 
+    /* ============ RELÓGIO ============ */
     let clockInterval = null;
 
     function updateClock() {
@@ -1158,6 +1227,7 @@
       }
     }
 
+    /* ============ TOAST ============ */
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
       if (!container) return;
@@ -1179,6 +1249,7 @@
       }, 3500);
     }
 
+    /* ============ NAVEGAÇÃO ============ */
     function switchTab(tab) {
       document.getElementById('tabContentRegistro').style.display = tab === 'registro' ? 'block' : 'none';
       document.getElementById('tabContentPlanilha').style.display = tab === 'planilha' ? 'block' : 'none';
@@ -1186,6 +1257,9 @@
       document.getElementById('tabBtnRegistro').classList.toggle('active', tab === 'registro');
       document.getElementById('tabBtnPlanilha').classList.toggle('active', tab === 'planilha');
       document.getElementById('tabBtnPatio').classList.toggle('active', tab === 'patio');
+      // Sempre volta ao topo do conteúdo ao trocar de aba
+      const main = document.querySelector('.main-container');
+      if (main) main.scrollTop = 0;
       if (tab === 'planilha') renderTable();
       if (tab === 'patio') renderPatio();
     }
@@ -1308,11 +1382,31 @@
       return rest === parseInt(cpf.substring(10, 11), 10);
     }
 
+    /* ============ IMAGEM ============ */
+    function compressImage(base64, maxW = 900, quality = 0.72) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const scale = Math.min(1, maxW / img.width);
+            const c = document.createElement('canvas');
+            c.width  = Math.floor(img.width  * scale);
+            c.height = Math.floor(img.height * scale);
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            resolve(c.toDataURL('image/jpeg', quality));
+          } catch (e) { resolve(base64); }
+        };
+        img.onerror = () => resolve(base64);
+        img.src = base64;
+      });
+    }
+
     function handleNativeImage(input) {
       if (input.files && input.files[0]) {
         const file = input.files[0];
-        if (file.size > 10 * 1024 * 1024) {
-          showToast('Imagem muito grande (máx 10MB).', 'error');
+        if (file.size > 15 * 1024 * 1024) {
+          showToast('Imagem muito grande (máx 15MB).', 'error');
           input.value = '';
           return;
         }
@@ -1354,16 +1448,40 @@
       });
     }
 
+    function loadTesseract() {
+      if (window.Tesseract) return Promise.resolve();
+      if (tesseractLoadingPromise) return tesseractLoadingPromise;
+      tesseractLoadingPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Falha ao carregar OCR'));
+        document.head.appendChild(s);
+      });
+      return tesseractLoadingPromise;
+    }
+
     async function processImageForOCR(base64Data) {
-      appState.currentPhotoBase64 = base64Data;
+      // 1) Comprime a imagem ANTES de guardar (evita estourar localStorage)
       const previewBox = document.getElementById('photoPreviewBox');
       const previewImg = document.getElementById('photoPreviewImg');
       const statusTitle = document.getElementById('photoStatusTitle');
       const statusText = document.getElementById('photoStatusText');
       const ocrStatus = document.getElementById('ocrStatus');
+
       previewImg.src = base64Data;
       previewBox.style.display = 'flex';
       previewBox.classList.add('scanning');
+      statusTitle.textContent = 'Processando...';
+      statusText.textContent = 'Preparando imagem';
+
+      // Comprime para armazenamento (não para OCR - OCR precisa de mais resolução)
+      try {
+        appState.currentPhotoBase64 = await compressImage(base64Data, 900, 0.72);
+      } catch (e) {
+        appState.currentPhotoBase64 = base64Data;
+      }
 
       if (appState.accessType === 'Pedestre') {
         previewBox.classList.remove('scanning');
@@ -1376,27 +1494,29 @@
 
       statusTitle.textContent = 'Analisando Imagem...';
       statusText.textContent = 'Varredura OCR em andamento';
-      ocrStatus.textContent = '⏳ Escaneando placa na imagem...';
+      ocrStatus.textContent = '⏳ Carregando módulo OCR...';
 
-      if (window.Tesseract) {
-        try {
-          const processedImage = await preprocessImageForOCR(base64Data);
-          const res = await Tesseract.recognize(processedImage, 'eng', {
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-          });
-          const text = String(res.data.text || '').toUpperCase().replace(/[^A-Z0-9]/g, ' ');
-          const match = text.match(/[A-Z]{3}[0-9][A-Z0-9][0-9]{2}/) || text.match(/[A-Z]{3}[0-9]{4}/);
-          previewBox.classList.remove('scanning');
-          if (match) {
-            document.getElementById('inputPlate').value = match[0];
-            statusTitle.textContent = 'Placa Detectada!';
-            statusText.textContent = `Identificada com sucesso: ${match[0]}`;
-            ocrStatus.innerHTML = `<span style="color: #34d399;">✅ Placa reconhecida: <strong>${escapeHTML(match[0])}</strong></span>`;
-            showToast(`Placa detectada: ${match[0]}`, 'success');
-            playBeep(880, 0.2);
-            return;
-          }
-        } catch (err) { console.warn('OCR error:', err); }
+      try {
+        await loadTesseract();
+        ocrStatus.textContent = '⏳ Escaneando placa na imagem...';
+        const processedImage = await preprocessImageForOCR(base64Data);
+        const res = await Tesseract.recognize(processedImage, 'eng', {
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        });
+        const text = String(res.data.text || '').toUpperCase().replace(/[^A-Z0-9]/g, ' ');
+        const match = text.match(/[A-Z]{3}[0-9][A-Z0-9][0-9]{2}/) || text.match(/[A-Z]{3}[0-9]{4}/);
+        previewBox.classList.remove('scanning');
+        if (match) {
+          document.getElementById('inputPlate').value = match[0];
+          statusTitle.textContent = 'Placa Detectada!';
+          statusText.textContent = `Identificada com sucesso: ${match[0]}`;
+          ocrStatus.innerHTML = `<span style="color: #34d399;">✅ Placa reconhecida: <strong>${escapeHTML(match[0])}</strong></span>`;
+          showToast(`Placa detectada: ${match[0]}`, 'success');
+          playBeep(880, 0.2);
+          return;
+        }
+      } catch (err) {
+        console.warn('OCR error:', err);
       }
 
       previewBox.classList.remove('scanning');
@@ -1414,6 +1534,7 @@
       document.getElementById('ocrStatus').textContent = 'Capture a foto para leitura automática por OCR ou digite a placa';
     }
 
+    /* ============ WEBCAM ============ */
     async function openWebcamStream() {
       if (!window.isSecureContext) {
         showToast('Câmera ao vivo requer HTTPS ou localhost. Use o botão de foto.', 'error');
@@ -1468,6 +1589,7 @@
       processImageForOCR(dataUrl);
     }
 
+    /* ============ PÁTIO / PRESENTES ============ */
     function calculatePresentes() {
       const sorted = [...appState.records].sort((a, b) => a.timestamp - b.timestamp);
       const presentes = new Map();
@@ -1486,7 +1608,7 @@
               const nameMatch = entry.driver && r.driver && entry.driver.toLowerCase() === r.driver.toLowerCase();
               if (cpfMatch || nameMatch) { keyToRemove = id; break; }
             } else {
-              if (entry.plate && entry.plate.toUpperCase() === r.plate.toUpperCase()) { keyToRemove = id; break; }
+              if (entry.plate && r.plate && entry.plate.toUpperCase() === r.plate.toUpperCase()) { keyToRemove = id; break; }
             }
           }
           if (keyToRemove) presentes.delete(keyToRemove);
@@ -1538,6 +1660,7 @@
       return { text, colorStyle };
     }
 
+    /* ============ RENDER TABELAS ============ */
     function renderTable() {
       const tbody = document.getElementById('spreadsheetBody');
       const query = (document.getElementById('searchTable').value || '').toLowerCase().trim();
@@ -1608,7 +1731,7 @@
             </td>
             <td style="text-align: center;">
               ${r.photo ? `
-                <img src="${r.photo}" class="photo-thumb" onclick="openPhotoModal('${escapeHTML(r.id)}')" title="Clique para ampliar" alt="Foto">
+                <img src="${r.photo}" class="photo-thumb" onclick="openPhotoModal('${escapeHTML(r.id)}')" title="Clique para ampliar" alt="Foto" loading="lazy">
               ` : `<span style="font-size: 18px; opacity: 0.3;">📷</span>`}
             </td>
             <td>
@@ -1676,6 +1799,7 @@
       }).join('');
     }
 
+    /* ============ SALVAR / SAÍDA ============ */
     function saveRecord(openTicket = false) {
       const isPedestre = (appState.accessType === 'Pedestre');
       let plate = document.getElementById('inputPlate').value.trim().toUpperCase();
@@ -1713,6 +1837,16 @@
         }
       }
 
+      // Validação suave de CPF
+      const cpfRaw = cpf.replace(/\D/g, '');
+      if (cpfRaw.length === 11 && !isValidCPF(cpfRaw)) {
+        if (!confirm('⚠️ O CPF informado parece inválido.\n\nDeseja salvar mesmo assim?')) {
+          document.getElementById('inputCpf').focus();
+          playBeep(250, 0.2);
+          return;
+        }
+      }
+
       if (appState.movement === 'Saída') {
         const presentes = calculatePresentes();
         const match = presentes.find(p => {
@@ -1729,6 +1863,7 @@
             playBeep(250, 0.2);
             return;
           }
+          appState.pendingLinkedEntryId = null;
         } else {
           appState.pendingLinkedEntryId = match.id;
         }
@@ -1751,16 +1886,25 @@
         linkedEntryId: (appState.movement === 'Saída') ? appState.pendingLinkedEntryId : null
       };
 
+      const previous = appState.records.slice();
       appState.records.unshift(rec);
-      persistData();
+      const ok = persistData();
+      if (!ok) {
+        // Rollback se não persistiu
+        appState.records = previous;
+        showToast('Registro NÃO foi salvo por falta de espaço. Exporte um backup e remova fotos antigas.', 'error');
+        return;
+      }
 
+      // Limpar form
       document.getElementById('inputPlate').value = '';
       document.getElementById('inputPersonName').value = '';
       document.getElementById('inputCpf').value = '';
       document.getElementById('inputDestination').value = '';
       document.getElementById('inputNotes').value = '';
-      document.getElementById('cpfValidationBadge').className = 'cpf-status-badge';
-      document.getElementById('cpfValidationBadge').textContent = '';
+      const badge = document.getElementById('cpfValidationBadge');
+      badge.className = 'cpf-status-badge';
+      badge.textContent = '';
       removeAttachedPhoto();
       appState.pendingLinkedEntryId = null;
 
@@ -1792,7 +1936,6 @@
       appState.pendingLinkedEntryId = rec.id;
       showToast(`Dados carregados para saída de ${rec.driver}!`, 'info');
       playBeep(640, 0.1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function deleteRecord(id) {
@@ -1806,6 +1949,7 @@
       playBeep(300, 0.1);
     }
 
+    /* ============ EXPORTAÇÃO ============ */
     function exportToCSV() {
       if (appState.records.length === 0) {
         showToast('Nenhum registro para exportar.', 'error');
@@ -1829,12 +1973,15 @@
       const url = URL.createObjectURL(blob);
       a.href = url;
       a.download = `Portaria_VIP_Relatorio_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
       a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
       showToast('Planilha CSV gerada!', 'success');
       playBeep(700, 0.15);
     }
 
+    /* ============ MODAIS ============ */
     function openPhotoModal(recordId) {
       const rec = appState.records.find(r => r.id === recordId);
       if (!rec || !rec.photo) return;
@@ -1876,24 +2023,25 @@
       document.getElementById('ticketModal').style.display = 'none';
     }
 
+    /* ============ IMPRESSÃO ============ */
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('printing-ticket', 'printing-spreadsheet');
+    });
+
     function printTicketOnly() {
       document.body.classList.remove('printing-spreadsheet');
       document.body.classList.add('printing-ticket');
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => document.body.classList.remove('printing-ticket'), 300);
-      }, 50);
+      // usa rAF para garantir que a classe já aplicou o CSS antes do print()
+      requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
     }
 
     function printSpreadsheet() {
       document.body.classList.remove('printing-ticket');
       document.body.classList.add('printing-spreadsheet');
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => document.body.classList.remove('printing-spreadsheet'), 300);
-      }, 50);
+      requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
     }
 
+    /* ============ BACKUP ============ */
     function openBackupModal() {
       document.getElementById('backupModal').style.display = 'flex';
     }
@@ -1904,12 +2052,22 @@
     }
 
     function exportBackupJSON() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState.records, null, 2));
-      const a = document.createElement('a');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", `backup_portaria_vip_${Date.now()}.json`);
-      a.click();
-      showToast('Backup baixado!', 'success');
+      try {
+        const json = JSON.stringify(appState.records, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_portaria_vip_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        showToast('Backup baixado!', 'success');
+      } catch (e) {
+        console.error(e);
+        showToast('Erro ao gerar backup.', 'error');
+      }
     }
 
     function handleRestoreFile(input) {
@@ -1920,12 +2078,12 @@
             const data = JSON.parse(e.target.result);
             if (Array.isArray(data)) {
               appState.records = data;
-              persistData();
+              const ok = persistData();
               renderStats();
               renderTable();
               renderPatio();
               closeBackupModal();
-              showToast(`${data.length} registros restaurados!`, 'success');
+              if (ok) showToast(`${data.length} registros restaurados!`, 'success');
             } else {
               showToast('Arquivo de backup inválido.', 'error');
             }
@@ -1955,6 +2113,7 @@
       playBeep(600, 0.2);
     }
 
+    /* ============ ATALHOS ============ */
     window.addEventListener('keydown', (e) => {
       const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
       const isInputFocused = tag === 'input' || tag === 'textarea' || tag === 'select';
